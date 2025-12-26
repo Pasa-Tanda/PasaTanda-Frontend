@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [],
+  },
+  turbopack: {
+    // Configuración vacía para habilitar Turbopack sin errores
+  },
 };
 
 export default nextConfig;
