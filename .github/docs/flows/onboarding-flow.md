@@ -1,4 +1,3 @@
-
 sequenceDiagram
     participant U as Usuario (WA/FE)
     participant FE as Frontend (Next.js)
@@ -9,17 +8,20 @@ sequenceDiagram
     participant WA as WhatsApp Cloud
     autonumber
 
-    U->>FE: Form onboarding (tel, grupo, Bs, USDC, FX)
+    U->>FE: Escribe datos en el formulario (Nombre, moneda, monto total, frecuencia, yield enabled)
+    U->>FE: Escribe numero de whatsapp y verifica
     FE->>A: GET /api/verify
     A->>FE: Tu codigo de verificacion es XXXX
     U->>WA: enviar mensaje de verificacion al numero del bot
     WA-->>U: Verificacion correcta
     WA-->>A: /webhook extraer numero de whatsapp, username
-    U->>FE: Enviar formulario
+    A->>A: guarda datos del usuario de wsp para crear al usuario luego (numero y username)
+    A->>FE: numero verificado exitosamente (POST api/webhook/confirm verification) [+ datos de wsp]
+    U->>FE: Envia todos los datos de creacion del grupo
     FE->>A: POST api/onboarding
     Note over FE, A: NO CREA CONTRATOS DE SOROBAN AUN (no se da inicio a la tanda)
     A->>A: crea keypairs de stellar
-    A->>SB: INSERT/UPSERT user
+    A->>SB: Une los datos del formulario y los de agentBE (wsp + stellar keys) para crear un nuevo usuario (INSERT/UPSERT user)
     A->>WA: Crear grupo WA
     WA-->>U: enviar link de invitacion del grupo al whatsapp
     alt agregar miembros al grupo de whastapp

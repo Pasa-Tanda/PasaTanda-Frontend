@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Alert,
   Box,
@@ -20,6 +20,11 @@ import {
   Fade,
   CircularProgress,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { PaymentRequirements } from 'x402-stellar-client';
@@ -33,6 +38,18 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LinkIcon from '@mui/icons-material/Link';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import {
+  connectWallet,
+  getConnectedAddress,
+  buildXPayment,
+  checkUsdcTrustline,
+  addUsdcTrustline,
+  disconnectWallet,
+  TrustlineStatus,
+  WalletInfo,
+} from '../../lib/stellar-wallet';
 
 type PaymentMethod = 'qrsimple' | 'stellar';
 
@@ -121,7 +138,7 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
   const resolvedParams = use(params);
   const orderId = resolvedParams.id;
   
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qrsimple');
@@ -130,11 +147,38 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [proof, setProof] = useState({ bank: '', reference: '', screenshotUrl: '', amount: '' });
+  
+  // Wallet state
+  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
+  const [trustlineStatus, setTrustlineStatus] = useState<TrustlineStatus | null>(null);
+  const [trustlineDialogOpen, setTrustlineDialogOpen] = useState(false);
+  const [trustlineLoading, setTrustlineLoading] = useState(false);
 
   const agentUrl = useMemo(() => process.env.NEXT_PUBLIC_AGENT_BE_URL?.replace(/\/$/, ''), []);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Check if wallet was previously connected
+    const checkExistingConnection = async () => {
+      try {
+        const address = await getConnectedAddress();
+        if (address) {
+          setWalletInfo({
+            address,
+            network: 'TESTNET',
+            networkPassphrase: 'Test SDF Network ; September 2015',
+            isConnected: true,
+          });
+          // Check trustline status
+          const status = await checkUsdcTrustline(address);
+          setTrustlineStatus(status);
+        }
+      } catch {
+        console.log('No existing wallet connection');
+      }
+    };
+    checkExistingConnection();
   }, []);
 
   const fetchOrder = async () => {
@@ -204,27 +248,105 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
     }
   };
 
+  // Connect wallet using stellar-wallets-kit
+  const handleConnectWallet = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const wallet = await connectWallet();
+      setWalletInfo(wallet);
+      
+      // Check trustline status
+      const status = await checkUsdcTrustline(wallet.address);
+      setTrustlineStatus(status);
+      
+      // If no trustline, prompt user
+      if (!status.exists) {
+        setTrustlineDialogOpen(true);
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : locale === 'es' ? 'Error al conectar wallet' : 'Error connecting wallet';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [locale]);
+
+  // Handle disconnect wallet
+  const handleDisconnectWallet = useCallback(() => {
+    disconnectWallet();
+    setWalletInfo(null);
+    setTrustlineStatus(null);
+  }, []);
+
+  // Add USDC trustline
+  const handleAddTrustline = useCallback(async () => {
+    if (!walletInfo?.address) return;
+    
+    setTrustlineLoading(true);
+    setError(null);
+    try {
+      const result = await addUsdcTrustline(walletInfo.address);
+      
+      if (result.success) {
+        setTrustlineStatus({ exists: true, balance: '0', limit: '922337203685.4775807' });
+        setTrustlineDialogOpen(false);
+        setSuccess(locale === 'es' 
+          ? `Trustline USDC agregada correctamente. TX: ${result.txHash?.substring(0, 8)}...` 
+          : `USDC trustline added successfully. TX: ${result.txHash?.substring(0, 8)}...`
+        );
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : locale === 'es' ? 'Error al agregar trustline' : 'Error adding trustline';
+      setError(errorMessage);
+    } finally {
+      setTrustlineLoading(false);
+    }
+  }, [walletInfo?.address, locale]);
+
   const handleCryptoClaim = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    
     if (!agentUrl) {
       setError(t.payment.missingAgent);
       setLoading(false);
       return;
     }
+    
+    // Ensure wallet is connected
+    if (!walletInfo?.address) {
+      setError(locale === 'es' ? 'Primero conecta tu wallet' : 'Please connect your wallet first');
+      setLoading(false);
+      return;
+    }
+    
+    // Ensure trustline exists
+    if (!trustlineStatus?.exists) {
+      setTrustlineDialogOpen(true);
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const { buildXPaymentFromChallenge, createXPaymentFromRequirements } = await import('../../lib/stellar');
       let xPaymentToken = '';
 
       if (order?.paymentRequirements) {
+        // Use the old method for PaymentRequirements
+        const { createXPaymentFromRequirements } = await import('../../lib/stellar');
         const result = await createXPaymentFromRequirements(order.paymentRequirements);
         xPaymentToken = result.xPayment;
       } else if (order?.xdrChallenge) {
-        const result = await buildXPaymentFromChallenge(order.xdrChallenge);
-        xPaymentToken = result.xPayment;
+        // Use stellar-wallets-kit via our wrapper
+        xPaymentToken = await buildXPayment(order.xdrChallenge, {
+          address: walletInfo.address,
+          networkPassphrase: walletInfo.networkPassphrase,
+        });
       } else {
-        throw new Error('No hay challenge disponible para firmar');
+        throw new Error(locale === 'es' ? 'No hay challenge disponible para firmar' : 'No challenge available to sign');
       }
 
       const res = await fetch(`${agentUrl}/api/orders/${orderId}/claim`, {
@@ -233,7 +355,7 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
         body: JSON.stringify({ paymentType: 'crypto', xPayment: xPaymentToken }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || 'No se pudo reclamar el pago');
+      if (!res.ok) throw new Error(data?.message || (locale === 'es' ? 'No se pudo reclamar el pago' : 'Could not claim payment'));
       setSuccess(t.payment.walletReady);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error';
@@ -592,7 +714,7 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
                       ) : (
                         <Stack spacing={3}>
                           <Typography variant="h6" sx={{ fontWeight: 700, color: '#000' }}>
-                            Pago con Stellar Wallet
+                            {locale === 'es' ? 'Pago con Stellar Wallet' : 'Pay with Stellar Wallet'}
                           </Typography>
                           
                           <Box 
@@ -604,47 +726,173 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
                               textAlign: 'center',
                             }}
                           >
-                            <Avatar 
-                              sx={{ 
-                                bgcolor: '#000', 
-                                width: 80, 
-                                height: 80, 
-                                mx: 'auto',
-                                mb: 3,
-                              }}
-                            >
-                              <AccountBalanceWalletIcon sx={{ fontSize: 40 }} />
-                            </Avatar>
-                            <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)', mb: 3 }}>
-                              Firma el XDR challenge con Freighter. Usamos x402-stellar-client para generar el X-PAYMENT de forma segura.
-                            </Typography>
-                            <Button 
-                              variant="contained" 
-                              onClick={handleCryptoClaim} 
-                              disabled={loading}
-                              fullWidth
-                              size="large"
-                              sx={{
-                                py: 1.5,
-                                bgcolor: '#000',
-                                borderRadius: 2,
-                                fontWeight: 700,
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                  bgcolor: '#222',
-                                  transform: 'translateY(-2px)',
-                                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                                },
-                              }}
-                            >
-                              {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : t.payment.payWithWallet}
-                            </Button>
+                            {!walletInfo ? (
+                              <>
+                                <Avatar 
+                                  sx={{ 
+                                    bgcolor: '#000', 
+                                    width: 80, 
+                                    height: 80, 
+                                    mx: 'auto',
+                                    mb: 3,
+                                  }}
+                                >
+                                  <AccountBalanceWalletIcon sx={{ fontSize: 40 }} />
+                                </Avatar>
+                                <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)', mb: 3 }}>
+                                  {locale === 'es' 
+                                    ? 'Conecta tu wallet Stellar para firmar el pago de forma segura.'
+                                    : 'Connect your Stellar wallet to sign the payment securely.'}
+                                </Typography>
+                                <Button 
+                                  variant="contained" 
+                                  onClick={handleConnectWallet} 
+                                  disabled={loading}
+                                  fullWidth
+                                  size="large"
+                                  startIcon={<LinkIcon />}
+                                  sx={{
+                                    py: 1.5,
+                                    bgcolor: '#000',
+                                    borderRadius: 2,
+                                    fontWeight: 700,
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                      bgcolor: '#222',
+                                      transform: 'translateY(-2px)',
+                                      boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                    },
+                                  }}
+                                >
+                                  {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : (locale === 'es' ? 'Conectar Wallet' : 'Connect Wallet')}
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                {/* Wallet Connected State */}
+                                <Stack spacing={2} alignItems="center">
+                                  <Chip 
+                                    icon={<CheckCircleIcon />}
+                                    label={locale === 'es' ? 'Wallet Conectada' : 'Wallet Connected'}
+                                    sx={{ 
+                                      bgcolor: 'rgba(0,200,0,0.1)', 
+                                      color: '#000',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      fontFamily: 'monospace',
+                                      bgcolor: 'rgba(0,0,0,0.05)',
+                                      px: 2,
+                                      py: 1,
+                                      borderRadius: 2,
+                                      color: '#000',
+                                      fontSize: '0.75rem',
+                                    }}
+                                  >
+                                    {walletInfo.address.substring(0, 6)}...{walletInfo.address.substring(walletInfo.address.length - 6)}
+                                  </Typography>
+                                  
+                                  {/* Trustline Status */}
+                                  {trustlineStatus && (
+                                    <Chip 
+                                      icon={trustlineStatus.exists ? <CheckCircleIcon /> : <WarningAmberIcon />}
+                                      label={trustlineStatus.exists 
+                                        ? (locale === 'es' ? 'Trustline USDC ✓' : 'USDC Trustline ✓')
+                                        : (locale === 'es' ? 'Sin Trustline USDC' : 'No USDC Trustline')
+                                      }
+                                      size="small"
+                                      sx={{ 
+                                        bgcolor: trustlineStatus.exists ? 'rgba(0,200,0,0.1)' : 'rgba(255,150,0,0.1)', 
+                                        color: '#000',
+                                      }}
+                                    />
+                                  )}
+                                  
+                                  {trustlineStatus?.exists && trustlineStatus.balance && (
+                                    <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)' }}>
+                                      Balance: {parseFloat(trustlineStatus.balance).toFixed(2)} USDC
+                                    </Typography>
+                                  )}
+                                </Stack>
+
+                                <Divider sx={{ my: 3 }} />
+
+                                <Stack spacing={2}>
+                                  {!trustlineStatus?.exists && (
+                                    <Button 
+                                      variant="outlined"
+                                      onClick={() => setTrustlineDialogOpen(true)}
+                                      fullWidth
+                                      sx={{
+                                        py: 1.5,
+                                        borderColor: '#000',
+                                        color: '#000',
+                                        borderRadius: 2,
+                                        fontWeight: 600,
+                                        '&:hover': {
+                                          borderColor: '#000',
+                                          bgcolor: 'rgba(0,0,0,0.05)',
+                                        },
+                                      }}
+                                    >
+                                      {locale === 'es' ? 'Agregar Trustline USDC' : 'Add USDC Trustline'}
+                                    </Button>
+                                  )}
+                                  
+                                  <Button 
+                                    variant="contained" 
+                                    onClick={handleCryptoClaim} 
+                                    disabled={loading || !trustlineStatus?.exists}
+                                    fullWidth
+                                    size="large"
+                                    sx={{
+                                      py: 1.5,
+                                      bgcolor: '#000',
+                                      borderRadius: 2,
+                                      fontWeight: 700,
+                                      transition: 'all 0.3s ease',
+                                      '&:hover': {
+                                        bgcolor: '#222',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                      },
+                                      '&:disabled': {
+                                        bgcolor: 'rgba(0,0,0,0.2)',
+                                      },
+                                    }}
+                                  >
+                                    {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : t.payment.payWithWallet}
+                                  </Button>
+                                  
+                                  <Button 
+                                    variant="text"
+                                    onClick={handleDisconnectWallet}
+                                    size="small"
+                                    sx={{
+                                      color: 'rgba(0,0,0,0.5)',
+                                      fontSize: '0.75rem',
+                                      '&:hover': {
+                                        bgcolor: 'transparent',
+                                        color: '#000',
+                                      },
+                                    }}
+                                  >
+                                    {locale === 'es' ? 'Desconectar wallet' : 'Disconnect wallet'}
+                                  </Button>
+                                </Stack>
+                              </>
+                            )}
                           </Box>
 
                           <Divider />
                           
                           <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)', textAlign: 'center' }}>
-                            Si tu wallet está en otra red, Freighter mostrará una alerta antes de firmar.
+                            {locale === 'es' 
+                              ? 'Compatible con Freighter, xBull, Lobstr y otras wallets Stellar.'
+                              : 'Compatible with Freighter, xBull, Lobstr and other Stellar wallets.'}
                           </Typography>
                         </Stack>
                       )}
@@ -658,6 +906,73 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
 
         <Footer />
       </Box>
+
+      {/* Trustline Dialog */}
+      <Dialog 
+        open={trustlineDialogOpen} 
+        onClose={() => !trustlineLoading && setTrustlineDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            maxWidth: 400,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {locale === 'es' ? 'Trustline USDC Requerida' : 'USDC Trustline Required'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.7)' }}>
+              {locale === 'es'
+                ? 'Para recibir pagos en USDC, necesitas agregar una trustline para el token USDC en tu wallet. Esto es una operación única.'
+                : 'To receive USDC payments, you need to add a trustline for the USDC token in your wallet. This is a one-time operation.'}
+            </Typography>
+            <Box 
+              sx={{ 
+                bgcolor: 'rgba(0,0,0,0.03)', 
+                p: 2, 
+                borderRadius: 2,
+                border: '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)', display: 'block' }}>
+                Token
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#000' }}>
+                USDC (Blend Testnet)
+              </Typography>
+              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(0,0,0,0.5)', fontSize: '0.65rem' }}>
+                CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU
+              </Typography>
+            </Box>
+            {trustlineLoading && <LinearProgress sx={{ borderRadius: 1 }} />}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={() => setTrustlineDialogOpen(false)} 
+            disabled={trustlineLoading}
+            sx={{ color: 'rgba(0,0,0,0.5)' }}
+          >
+            {locale === 'es' ? 'Cancelar' : 'Cancel'}
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleAddTrustline}
+            disabled={trustlineLoading}
+            sx={{
+              bgcolor: '#000',
+              '&:hover': { bgcolor: '#222' },
+            }}
+          >
+            {trustlineLoading 
+              ? <CircularProgress size={20} sx={{ color: '#fff' }} />
+              : (locale === 'es' ? 'Agregar Trustline' : 'Add Trustline')
+            }
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

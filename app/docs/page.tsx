@@ -26,6 +26,9 @@ import { useI18n } from '../lib/i18n';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CodeIcon from '@mui/icons-material/Code';
 import ApiIcon from '@mui/icons-material/Api';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import DataObjectIcon from '@mui/icons-material/DataObject';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 
 // Glass card component
@@ -104,8 +107,38 @@ function ApiEndpoint({ method, path, description }: { method: string; path: stri
 }
 
 export default function DocsPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const mounted = useMounted();
+
+  const docSections = [
+    {
+      title: locale === 'es' ? 'API Reference' : 'API Reference',
+      description: locale === 'es' 
+        ? 'Endpoints de PayBE, AgentBE y protocolo X402' 
+        : 'PayBE, AgentBE and X402 protocol endpoints',
+      icon: <ApiIcon sx={{ fontSize: 32 }} />,
+      href: '/docs/api',
+      color: 'rgba(33, 150, 243, 0.1)',
+    },
+    {
+      title: locale === 'es' ? 'Smart Contracts' : 'Smart Contracts',
+      description: locale === 'es' 
+        ? 'Contratos Soroban: PasanakuFactory y PasanakuGroup' 
+        : 'Soroban contracts: PasanakuFactory and PasanakuGroup',
+      icon: <DataObjectIcon sx={{ fontSize: 32 }} />,
+      href: '/docs/contracts',
+      color: 'rgba(156, 39, 176, 0.1)',
+    },
+    {
+      title: locale === 'es' ? 'Guías de Integración' : 'Integration Guides',
+      description: locale === 'es' 
+        ? 'Wallet, X402, WhatsApp Bot y más' 
+        : 'Wallet, X402, WhatsApp Bot and more',
+      icon: <AccountTreeIcon sx={{ fontSize: 32 }} />,
+      href: '/docs/integrations',
+      color: 'rgba(76, 175, 80, 0.1)',
+    },
+  ];
 
   const apiEndpoints = [
     { method: 'GET', path: '/api/orders/:id', description: 'Obtener detalles de una orden de pago (QR, XDR, estado)' },
@@ -178,6 +211,55 @@ export default function DocsPage() {
                   </Stack>
                 </CardContent>
               </GlassCard>
+
+              {/* Documentation Section Cards */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                {docSections.map((section) => (
+                  <GlassCard 
+                    key={section.href}
+                    component={Link}
+                    href={section.href}
+                    sx={{ 
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
+                      <Box 
+                        sx={{ 
+                          width: 60, 
+                          height: 60, 
+                          borderRadius: 2, 
+                          bgcolor: section.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2,
+                          color: '#000',
+                        }}
+                      >
+                        {section.icon}
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#000', mb: 1 }}>
+                        {section.title}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 2 }}>
+                        {section.description}
+                      </Typography>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#000' }}>
+                          {locale === 'es' ? 'Ver más' : 'Learn more'}
+                        </Typography>
+                        <ArrowForwardIcon sx={{ fontSize: 16, color: '#000' }} />
+                      </Stack>
+                    </CardContent>
+                  </GlassCard>
+                ))}
+              </Box>
 
               {/* API Reference */}
               <GlassCard>

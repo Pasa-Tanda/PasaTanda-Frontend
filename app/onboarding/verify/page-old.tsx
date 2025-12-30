@@ -21,71 +21,71 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import GroupsIcon from '@mui/icons-material/Groups';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import CelebrationIcon from '@mui/icons-material/Celebration';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 import { useI18n } from '../../lib/i18n';
-import { useMounted } from '../../lib/useMounted';
 
 const frequencyOptions = [
-  { value: 7, labelEs: 'Semanal (7 días)', labelEn: 'Weekly (7 days)' },
-  { value: 14, labelEs: 'Quincenal (14 días)', labelEn: 'Biweekly (14 days)' },
-  { value: 30, labelEs: 'Mensual (30 días)', labelEn: 'Monthly (30 days)' },
-  { value: -1, labelEs: 'Personalizado', labelEn: 'Custom' },
+  { value: 7, label: 'Semanal (7 días)' },
+  { value: 14, label: 'Quincenal (14 días)' },
+  { value: 30, label: 'Mensual (30 días)' },
+  { value: -1, label: 'Personalizado' },
 ];
 
-// Background images mapped to each stage
-const stageBackgrounds = [
-  '/assets/images/backgrounds/onBoardingNameandAmmount.png',
-  '/assets/images/backgrounds/onBoardingFrecuencyandYield.png',
-  '/assets/images/backgrounds/onBoardingWhatsappVerification.png',
-  '/assets/images/backgrounds/onBoardingWhatsappVerification.png',
-  '/assets/images/backgrounds/onBoardingSuccess.png',
+const backgroundImages = [
+  '/assets/images/placeholders/image.png',
+  '/assets/images/placeholders/image.png',
+  '/assets/images/placeholders/image.png',
+  '/assets/images/placeholders/image.png',
+  '/assets/images/placeholders/image.png',
+];
+
+const stageMessages = [
+  'Crea tu grupo de ahorro en WhatsApp ahora',
+  'Configura la frecuencia de tu tanda',
+  'Verifica tu número de WhatsApp',
+  'Confirma los datos de tu grupo',
+  '¡Felicitaciones! Tu grupo ha sido creado',
 ];
 
 type StatusMessage = { type: 'success' | 'error'; text: string } | null;
 type Currency = 'BS' | 'USDC';
 
-// Monochrome glass input styling
+// Shared input styling for glass effect
 const glassInputStyle = {
   '& .MuiOutlinedInput-root': {
-    bgcolor: 'rgba(255,255,255,0.95)',
+    bgcolor: 'rgba(255,255,255,0.1)',
     borderRadius: 2,
     '& fieldset': {
-      borderColor: 'rgba(0,0,0,0.2)',
+      borderColor: 'rgba(255,255,255,0.3)',
     },
     '&:hover fieldset': {
-      borderColor: 'rgba(0,0,0,0.4)',
+      borderColor: 'rgba(255,255,255,0.5)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#000',
+      borderColor: 'rgba(255,255,255,0.8)',
     },
   },
   '& .MuiInputLabel-root': {
-    color: 'rgba(0,0,0,0.6)',
+    color: 'rgba(255,255,255,0.7)',
   },
   '& .MuiInputBase-input': {
-    color: '#000',
+    color: '#fff',
   },
   '& .MuiSelect-icon': {
-    color: 'rgba(0,0,0,0.6)',
+    color: 'rgba(255,255,255,0.7)',
   },
 };
 
 // Helper component for summary items
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
-      <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
         {label}:
       </Typography>
-      <Typography variant="body2" sx={{ color: '#000', fontWeight: 600 }}>
+      <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
         {value}
       </Typography>
     </Box>
@@ -93,28 +93,25 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 }
 
 export default function OnboardingVerifyPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
-  const mounted = useMounted();
   
-  // Stage control - 5 stages total following onboarding-flow.md
+  // Stage control
   const [currentStage, setCurrentStage] = useState(1);
   
-  // Form data - Stage 1 (Name and Amount)
+  // Form data - Stage 1
   const [groupName, setGroupName] = useState('');
   const [currency, setCurrency] = useState<Currency>('BS');
   const [totalAmount, setTotalAmount] = useState('');
   
-  // Form data - Stage 2 (Frequency and Yield)
+  // Form data - Stage 2
   const [frequencyDays, setFrequencyDays] = useState(30);
   const [customDays, setCustomDays] = useState('');
   const [yieldEnabled, setYieldEnabled] = useState(false);
   
-  // Form data - Stage 3 (WhatsApp Verification)
+  // Form data - Stage 3 & 4
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  
-  // Form data - Stage 4 (Confirmation)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   
   // UI state
@@ -125,45 +122,6 @@ export default function OnboardingVerifyPage() {
   const agentUrl = process.env.NEXT_PUBLIC_AGENT_BE_URL?.replace(/\/$/, '');
   const whatsappAgentNumber = process.env.NEXT_PUBLIC_WHATSAPP_AGENT_NUMBER || '';
 
-  // Stage titles and descriptions for i18n
-  const stageContent = useMemo(() => ({
-    1: {
-      title: locale === 'es' ? 'Información del Grupo' : 'Group Information',
-      subtitle: locale === 'es' 
-        ? 'Define el nombre y monto de tu tanda' 
-        : 'Define the name and amount of your tanda',
-      icon: <GroupsIcon sx={{ fontSize: 32 }} />,
-    },
-    2: {
-      title: locale === 'es' ? 'Configuración' : 'Configuration',
-      subtitle: locale === 'es' 
-        ? 'Establece la frecuencia y opciones de rendimiento' 
-        : 'Set frequency and yield options',
-      icon: <CalendarMonthIcon sx={{ fontSize: 32 }} />,
-    },
-    3: {
-      title: locale === 'es' ? 'Verificación WhatsApp' : 'WhatsApp Verification',
-      subtitle: locale === 'es' 
-        ? 'Verifica tu número para crear el grupo' 
-        : 'Verify your number to create the group',
-      icon: <WhatsAppIcon sx={{ fontSize: 32 }} />,
-    },
-    4: {
-      title: locale === 'es' ? 'Confirmación' : 'Confirmation',
-      subtitle: locale === 'es' 
-        ? 'Revisa los datos y crea tu grupo' 
-        : 'Review details and create your group',
-      icon: <VerifiedUserIcon sx={{ fontSize: 32 }} />,
-    },
-    5: {
-      title: locale === 'es' ? '¡Grupo Creado!' : 'Group Created!',
-      subtitle: locale === 'es' 
-        ? 'Tu tanda está lista para comenzar' 
-        : 'Your tanda is ready to start',
-      icon: <CelebrationIcon sx={{ fontSize: 32 }} />,
-    },
-  }), [locale]);
-
   const frequencyToSend = useMemo(() => {
     if (frequencyDays === -1) {
       const custom = Number(customDays || '0');
@@ -173,10 +131,10 @@ export default function OnboardingVerifyPage() {
   }, [frequencyDays, customDays]);
 
   const getFrequencyLabel = useCallback(() => {
-    if (frequencyDays === -1) return `${customDays} ${locale === 'es' ? 'días' : 'days'}`;
+    if (frequencyDays === -1) return `${customDays} días`;
     const option = frequencyOptions.find(o => o.value === frequencyDays);
-    return locale === 'es' ? option?.labelEs : option?.labelEn;
-  }, [frequencyDays, customDays, locale]);
+    return option?.label || `${frequencyDays} días`;
+  }, [frequencyDays, customDays]);
 
   // Validate stage before proceeding
   const canProceedFromStage = useCallback((stage: number): boolean => {
@@ -194,7 +152,7 @@ export default function OnboardingVerifyPage() {
     }
   }, [groupName, totalAmount, frequencyToSend, verificationCode, isPhoneVerified]);
 
-  // Request verification code - GET /api/onboarding/verify
+  // Request verification code
   const requestVerificationCode = async () => {
     if (!agentUrl) {
       setMessage({ type: 'error', text: t.payment.missingAgent });
@@ -208,27 +166,22 @@ export default function OnboardingVerifyPage() {
       const res = await fetch(`${agentUrl}/api/onboarding/verify?phone=${encodeURIComponent(phoneNumber.trim())}`);
       const data = await res.json().catch(() => ({}));
       
-      if (!res.ok) throw new Error(data?.message || (locale === 'es' ? 'No se pudo enviar el código' : 'Could not send code'));
+      if (!res.ok) throw new Error(data?.message || 'No se pudo enviar el código');
       
       if (data.code) {
         setVerificationCode(data.code);
       }
       
-      setMessage({ 
-        type: 'success', 
-        text: locale === 'es' 
-          ? 'Código generado. Envíalo al agente de WhatsApp.' 
-          : 'Code generated. Send it to the WhatsApp agent.'
-      });
+      setMessage({ type: 'success', text: 'Código generado. Envíalo al agente de WhatsApp.' });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : (locale === 'es' ? 'Error desconocido' : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
     }
   };
 
-  // Listen for webhook verification - POST /api/webhook/confirm_verification
+  // Listen for webhook verification
   useEffect(() => {
     if (currentStage !== 4) return;
     
@@ -239,12 +192,7 @@ export default function OnboardingVerifyPage() {
         
         if (data.verified) {
           setIsPhoneVerified(true);
-          setMessage({ 
-            type: 'success', 
-            text: locale === 'es' 
-              ? '¡Número de WhatsApp verificado correctamente!' 
-              : 'WhatsApp number verified successfully!'
-          });
+          setMessage({ type: 'success', text: '¡Número de WhatsApp verificado correctamente!' });
         }
       } catch {
         // Silent fail - we'll keep polling
@@ -253,9 +201,9 @@ export default function OnboardingVerifyPage() {
 
     const interval = setInterval(checkVerification, 3000);
     return () => clearInterval(interval);
-  }, [currentStage, phoneNumber, locale]);
+  }, [currentStage, phoneNumber]);
 
-  // Create group - POST /api/onboarding
+  // Create group
   const createGroup = async () => {
     if (!agentUrl) {
       setMessage({ type: 'error', text: t.payment.missingAgent });
@@ -284,20 +232,17 @@ export default function OnboardingVerifyPage() {
       
       const data = await res.json().catch(() => ({}));
       
-      if (!res.ok) throw new Error(data?.message || (locale === 'es' ? 'No se pudo crear el grupo' : 'Could not create group'));
+      if (!res.ok) throw new Error(data?.message || 'No se pudo crear el grupo');
       
       setCurrentStage(5);
-      setMessage({ 
-        type: 'success', 
-        text: locale === 'es' ? '¡Grupo creado exitosamente!' : 'Group created successfully!'
-      });
+      setMessage({ type: 'success', text: '¡Grupo creado exitosamente!' });
       
       // Redirect after 7 seconds
       setTimeout(() => {
         router.push('/');
       }, 7000);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : (locale === 'es' ? 'Error desconocido' : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setCreatingGroup(false);
@@ -306,13 +251,9 @@ export default function OnboardingVerifyPage() {
 
   // Generate WhatsApp link
   const whatsappLink = useMemo(() => {
-    const whatsappMessage = encodeURIComponent(
-      locale === 'es' 
-        ? `Mi código de verificación es: ${verificationCode}` 
-        : `My verification code is: ${verificationCode}`
-    );
+    const whatsappMessage = encodeURIComponent(`Mi código de verificación es: ${verificationCode}`);
     return `https://wa.me/${whatsappAgentNumber}?text=${whatsappMessage}`;
-  }, [verificationCode, whatsappAgentNumber, locale]);
+  }, [verificationCode, whatsappAgentNumber]);
 
   // Navigation handlers
   const goToNextStage = () => {
@@ -333,18 +274,22 @@ export default function OnboardingVerifyPage() {
       case 1:
         return (
           <Stack spacing={3}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              Información básica del grupo
+            </Typography>
+            
             <TextField
-              label={locale === 'es' ? 'Nombre del grupo' : 'Group name'}
+              label="Nombre del grupo"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               fullWidth
-              placeholder={locale === 'es' ? 'Ej: Tanda de los Amigos' : 'Ex: Friends Tanda'}
+              placeholder="Ej: Tanda de los Amigos"
               sx={glassInputStyle}
             />
             
             <Box>
-              <Typography variant="body2" sx={{ mb: 1, color: 'rgba(0,0,0,0.6)' }}>
-                {locale === 'es' ? 'Moneda del grupo' : 'Group currency'}
+              <Typography variant="body2" sx={{ mb: 1, color: 'rgba(255,255,255,0.7)' }}>
+                Moneda del grupo
               </Typography>
               <Stack direction="row" spacing={2}>
                 <Button
@@ -353,12 +298,12 @@ export default function OnboardingVerifyPage() {
                   sx={{
                     flex: 1,
                     py: 1.5,
-                    bgcolor: currency === 'BS' ? '#000' : 'transparent',
-                    color: currency === 'BS' ? '#fff' : '#000',
-                    borderColor: 'rgba(0,0,0,0.3)',
+                    bgcolor: currency === 'BS' ? 'rgba(255,255,255,0.9)' : 'transparent',
+                    color: currency === 'BS' ? '#000' : 'rgba(255,255,255,0.9)',
+                    borderColor: 'rgba(255,255,255,0.3)',
                     '&:hover': {
-                      bgcolor: currency === 'BS' ? '#222' : 'rgba(0,0,0,0.05)',
-                      borderColor: '#000',
+                      bgcolor: currency === 'BS' ? '#fff' : 'rgba(255,255,255,0.1)',
+                      borderColor: 'rgba(255,255,255,0.5)',
                     },
                   }}
                 >
@@ -370,12 +315,12 @@ export default function OnboardingVerifyPage() {
                   sx={{
                     flex: 1,
                     py: 1.5,
-                    bgcolor: currency === 'USDC' ? '#000' : 'transparent',
-                    color: currency === 'USDC' ? '#fff' : '#000',
-                    borderColor: 'rgba(0,0,0,0.3)',
+                    bgcolor: currency === 'USDC' ? 'rgba(255,255,255,0.9)' : 'transparent',
+                    color: currency === 'USDC' ? '#000' : 'rgba(255,255,255,0.9)',
+                    borderColor: 'rgba(255,255,255,0.3)',
                     '&:hover': {
-                      bgcolor: currency === 'USDC' ? '#222' : 'rgba(0,0,0,0.05)',
-                      borderColor: '#000',
+                      bgcolor: currency === 'USDC' ? '#fff' : 'rgba(255,255,255,0.1)',
+                      borderColor: 'rgba(255,255,255,0.5)',
                     },
                   }}
                 >
@@ -385,7 +330,7 @@ export default function OnboardingVerifyPage() {
             </Box>
             
             <TextField
-              label={`${locale === 'es' ? 'Monto total' : 'Total amount'} (${currency})`}
+              label={`Monto total (${currency})`}
               type="number"
               value={totalAmount}
               onChange={(e) => setTotalAmount(e.target.value)}
@@ -399,9 +344,13 @@ export default function OnboardingVerifyPage() {
       case 2:
         return (
           <Stack spacing={3}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              Configuración de la tanda
+            </Typography>
+            
             <TextField
               select
-              label={locale === 'es' ? 'Frecuencia de pagos' : 'Payment frequency'}
+              label="Frecuencia de pagos"
               value={frequencyDays}
               onChange={(e) => setFrequencyDays(Number(e.target.value))}
               fullWidth
@@ -409,14 +358,14 @@ export default function OnboardingVerifyPage() {
             >
               {frequencyOptions.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>
-                  {locale === 'es' ? opt.labelEs : opt.labelEn}
+                  {opt.label}
                 </MenuItem>
               ))}
             </TextField>
             
             {frequencyDays === -1 && (
               <TextField
-                label={locale === 'es' ? 'Días personalizados' : 'Custom days'}
+                label="Días personalizados"
                 type="number"
                 value={customDays}
                 onChange={(e) => setCustomDays(e.target.value)}
@@ -427,10 +376,10 @@ export default function OnboardingVerifyPage() {
             )}
             
             <Box sx={{ 
-              p: 2.5, 
+              p: 2, 
               borderRadius: 2, 
-              bgcolor: 'rgba(0,0,0,0.03)',
-              border: '1px solid rgba(0,0,0,0.1)',
+              bgcolor: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
             }}>
               <FormControlLabel
                 control={
@@ -439,26 +388,24 @@ export default function OnboardingVerifyPage() {
                     onChange={(_, checked) => setYieldEnabled(checked)}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#000',
+                        color: '#4CAF50',
                       },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#000',
+                        backgroundColor: '#4CAF50',
                       },
                     }}
                   />
                 }
                 label={
-                  <Typography variant="body1" sx={{ color: '#000' }}>
-                    {locale === 'es' ? 'Generar rendimientos (DeFi)' : 'Generate yield (DeFi)'}
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                    Generar rendimientos (DeFi)
                   </Typography>
                 }
               />
-              <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)', display: 'block', mt: 1 }}>
-                {locale === 'es' 
-                  ? 'El dinero acumulado puede generar intereses mientras espera ser entregado. ' 
-                  : 'Accumulated funds can earn interest while waiting to be delivered. '}
-                <MuiLink component={Link} href="/ToS" sx={{ color: '#000', fontWeight: 600 }}>
-                  {locale === 'es' ? 'Ver términos de servicio' : 'See terms of service'}
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', display: 'block', mt: 1 }}>
+                El dinero acumulado puede generar intereses mientras espera ser entregado.{' '}
+                <MuiLink component={Link} href="/ToS" sx={{ color: '#90CAF9' }}>
+                  Ver términos de servicio
                 </MuiLink>
               </Typography>
             </Box>
@@ -468,8 +415,12 @@ export default function OnboardingVerifyPage() {
       case 3:
         return (
           <Stack spacing={3}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              Verifica tu número de WhatsApp
+            </Typography>
+            
             <TextField
-              label={locale === 'es' ? 'Número de WhatsApp (con código de país)' : 'WhatsApp number (with country code)'}
+              label="Número de WhatsApp (con código de país)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               fullWidth
@@ -482,43 +433,37 @@ export default function OnboardingVerifyPage() {
               onClick={requestVerificationCode}
               disabled={loading || !phoneNumber.trim()}
               sx={{
-                borderColor: '#000',
-                color: '#000',
-                py: 1.5,
+                borderColor: 'rgba(255,255,255,0.5)',
+                color: 'rgba(255,255,255,0.9)',
                 '&:hover': {
-                  borderColor: '#000',
-                  bgcolor: 'rgba(0,0,0,0.05)',
-                },
-                '&:disabled': {
-                  borderColor: 'rgba(0,0,0,0.2)',
-                  color: 'rgba(0,0,0,0.3)',
+                  borderColor: '#fff',
+                  bgcolor: 'rgba(255,255,255,0.1)',
                 },
               }}
             >
-              {loading ? <CircularProgress size={20} sx={{ color: '#000' }} /> : (locale === 'es' ? 'Generar código de verificación' : 'Generate verification code')}
+              {loading ? <CircularProgress size={20} /> : 'Generar código de verificación'}
             </Button>
             
             {verificationCode && (
               <Fade in>
                 <Box sx={{ textAlign: 'center', py: 2 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 2 }}>
-                    {locale === 'es' ? 'Tu código de verificación es:' : 'Your verification code is:'}
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
+                    Tu código de verificación es:
                   </Typography>
                   <Typography
                     variant="h2"
                     sx={{
                       fontWeight: 700,
                       letterSpacing: '0.3em',
-                      color: '#000',
+                      color: '#fff',
+                      textShadow: '0 0 20px rgba(255,255,255,0.3)',
                       mb: 3,
                     }}
                   >
                     {verificationCode}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 2 }}>
-                    {locale === 'es' 
-                      ? 'Envía este código al agente de WhatsApp para verificar tu número' 
-                      : 'Send this code to the WhatsApp agent to verify your number'}
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
+                    Envía este código al agente de WhatsApp para verificar tu número
                   </Typography>
                   <Button
                     variant="contained"
@@ -526,16 +471,16 @@ export default function OnboardingVerifyPage() {
                     href={whatsappLink}
                     target="_blank"
                     sx={{
-                      bgcolor: '#000',
+                      bgcolor: '#25D366',
                       color: '#fff',
                       px: 4,
                       py: 1.5,
                       '&:hover': {
-                        bgcolor: '#222',
+                        bgcolor: '#128C7E',
                       },
                     }}
                   >
-                    {locale === 'es' ? 'Enviar código por WhatsApp' : 'Send code via WhatsApp'}
+                    Enviar código por WhatsApp
                   </Button>
                 </Box>
               </Fade>
@@ -546,14 +491,18 @@ export default function OnboardingVerifyPage() {
       case 4:
         return (
           <Stack spacing={3}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              Confirma tu grupo
+            </Typography>
+            
             {!isPhoneVerified ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <CircularProgress sx={{ color: '#000', mb: 2 }} />
-                <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)' }}>
-                  {locale === 'es' ? 'Esperando verificación de WhatsApp...' : 'Waiting for WhatsApp verification...'}
+                <CircularProgress sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }} />
+                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Esperando verificación de WhatsApp...
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)', display: 'block', mt: 1 }}>
-                  {locale === 'es' ? 'Asegúrate de haber enviado el código al agente' : 'Make sure you sent the code to the agent'}
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', mt: 1 }}>
+                  Asegúrate de haber enviado el código al agente
                 </Typography>
               </Box>
             ) : (
@@ -563,43 +512,37 @@ export default function OnboardingVerifyPage() {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: 1,
-                    color: '#000',
+                    color: '#4CAF50',
                     mb: 2,
                   }}>
                     <CheckCircleIcon />
                     <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {locale === 'es' ? 'Número de WhatsApp verificado correctamente' : 'WhatsApp number verified successfully'}
+                      Número de WhatsApp verificado correctamente
                     </Typography>
                   </Box>
                   
-                  <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
-                    {locale === 'es' ? 'Resumen de tu grupo:' : 'Group summary:'}
+                  <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2 }}>
+                    Resumen de tu grupo:
                   </Typography>
                   
                   <Box sx={{ 
-                    bgcolor: 'rgba(0,0,0,0.03)', 
+                    bgcolor: 'rgba(0,0,0,0.2)', 
                     borderRadius: 2, 
-                    p: 2.5,
-                    border: '1px solid rgba(0,0,0,0.1)',
+                    p: 2,
+                    border: '1px solid rgba(255,255,255,0.1)',
                   }}>
-                    <Stack spacing={1}>
-                      <SummaryItem label={locale === 'es' ? 'Nombre del grupo' : 'Group name'} value={groupName} />
-                      <SummaryItem label={locale === 'es' ? 'Moneda' : 'Currency'} value={currency} />
-                      <SummaryItem label={locale === 'es' ? 'Monto total' : 'Total amount'} value={`${totalAmount} ${currency}`} />
-                      <SummaryItem label={locale === 'es' ? 'Frecuencia' : 'Frequency'} value={getFrequencyLabel() || ''} />
-                      <SummaryItem 
-                        label={locale === 'es' ? 'Rendimientos' : 'Yield'} 
-                        value={yieldEnabled 
-                          ? (locale === 'es' ? 'Activados' : 'Enabled') 
-                          : (locale === 'es' ? 'Desactivados' : 'Disabled')
-                        } 
-                      />
+                    <Stack spacing={1.5}>
+                      <SummaryItem label="Nombre del grupo" value={groupName} />
+                      <SummaryItem label="Moneda" value={currency} />
+                      <SummaryItem label="Monto total" value={`${totalAmount} ${currency}`} />
+                      <SummaryItem label="Frecuencia" value={getFrequencyLabel()} />
+                      <SummaryItem label="Rendimientos" value={yieldEnabled ? 'Activados' : 'Desactivados'} />
                       <SummaryItem label="WhatsApp" value={phoneNumber} />
                     </Stack>
                   </Box>
                   
-                  <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)', textAlign: 'center', mt: 2 }}>
-                    {locale === 'es' ? '¿Deseas crear el grupo con estos datos?' : 'Do you want to create the group with this data?'}
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', textAlign: 'center', mt: 2 }}>
+                    ¿Deseas crear el grupo con estos datos?
                   </Typography>
                   
                   <Button
@@ -608,16 +551,16 @@ export default function OnboardingVerifyPage() {
                     onClick={createGroup}
                     disabled={creatingGroup}
                     sx={{
-                      bgcolor: '#000',
-                      color: '#fff',
+                      bgcolor: '#fff',
+                      color: '#000',
                       py: 1.5,
                       fontWeight: 700,
                       '&:hover': {
-                        bgcolor: '#222',
+                        bgcolor: 'rgba(255,255,255,0.9)',
                       },
                     }}
                   >
-                    {creatingGroup ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : (locale === 'es' ? 'Crear grupo ahora' : 'Create group now')}
+                    {creatingGroup ? <CircularProgress size={24} /> : 'Crear grupo ahora'}
                   </Button>
                 </Stack>
               </Fade>
@@ -628,27 +571,20 @@ export default function OnboardingVerifyPage() {
       case 5:
         return (
           <Stack spacing={3} sx={{ textAlign: 'center', py: 4 }}>
-            <CheckCircleIcon sx={{ fontSize: 80, color: '#000', mx: 'auto' }} />
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#000' }}>
-              {locale === 'es' ? '¡Felicitaciones!' : 'Congratulations!'}
+            <CheckCircleIcon sx={{ fontSize: 80, color: '#4CAF50', mx: 'auto' }} />
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#fff' }}>
+              ¡Felicitaciones!
             </Typography>
-            <Typography variant="h6" sx={{ color: 'rgba(0,0,0,0.8)' }}>
-              {locale === 'es' ? 'Has creado un grupo exitosamente' : 'You have successfully created a group'}
+            <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+              Has creado un grupo exitosamente
             </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.6)' }}>
-              {locale === 'es' 
-                ? 'Revisa tu WhatsApp para encontrar el link de invitación' 
-                : 'Check your WhatsApp for the invitation link'}
+            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              Revisa tu WhatsApp para encontrar el link de invitación
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.5)', mt: 2 }}>
-              {locale === 'es' 
-                ? 'Nota: El grupo está en estado DRAFT. Escribe "iniciar tanda" en el grupo de WhatsApp para activar el contrato y comenzar.' 
-                : 'Note: The group is in DRAFT state. Type "iniciar tanda" in the WhatsApp group to activate the contract and start.'}
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+              Serás redirigido a la página principal en unos segundos...
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.4)' }}>
-              {locale === 'es' ? 'Serás redirigido a la página principal en unos segundos...' : 'You will be redirected to the main page in a few seconds...'}
-            </Typography>
-            <CircularProgress sx={{ color: '#000', mx: 'auto', mt: 2 }} size={24} />
+            <CircularProgress sx={{ color: 'rgba(255,255,255,0.5)', mx: 'auto', mt: 2 }} size={24} />
           </Stack>
         );
 
@@ -657,54 +593,29 @@ export default function OnboardingVerifyPage() {
     }
   };
 
-  if (!mounted) {
-    return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress sx={{ color: '#000' }} />
-      </Box>
-    );
-  }
-
   return (
     <Box
       sx={{
         minHeight: '100vh',
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: '#fff',
       }}
     >
-      {/* Background image carousel based on stage */}
+      {/* Background image */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
-          backgroundImage: `url(${stageBackgrounds[currentStage - 1]})`,
+          backgroundImage: `url(${backgroundImages[currentStage - 1]})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          transition: 'background-image 0.6s ease-in-out',
+          transition: 'background-image 0.5s ease-in-out',
           '&::after': {
             content: '""',
             position: 'absolute',
             inset: 0,
-            bgcolor: 'rgba(255,255,255,0.75)',
-            backdropFilter: 'blur(2px)',
+            bgcolor: 'rgba(0,0,0,0.4)',
           },
-        }}
-      />
-
-      {/* Grid overlay */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '40px 40px',
-          pointerEvents: 'none',
-          zIndex: 1,
         }}
       />
 
@@ -726,34 +637,28 @@ export default function OnboardingVerifyPage() {
           py: 4,
         }}
       >
-        {/* Stage indicator header */}
-        <Fade in key={`header-${currentStage}`}>
+        {/* Stage message - Green box */}
+        <Fade in key={currentStage}>
           <Box
             sx={{
               maxWidth: 500,
               mb: 4,
-              p: 2.5,
-              borderRadius: 3,
-              bgcolor: 'rgba(0,0,0,0.9)',
+              p: 2,
+              borderRadius: 2,
+              bgcolor: 'rgba(76, 175, 80, 0.85)',
               backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.2)',
             }}
           >
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Box sx={{ color: '#fff' }}>
-                {stageContent[currentStage as keyof typeof stageContent].icon}
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                  {locale === 'es' ? `Paso ${currentStage} de 5` : `Step ${currentStage} of 5`}
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#fff' }}>
-                  {stageContent[currentStage as keyof typeof stageContent].title}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {stageContent[currentStage as keyof typeof stageContent].subtitle}
-                </Typography>
-              </Box>
-            </Stack>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                color: '#fff',
+              }}
+            >
+              {stageMessages[currentStage - 1]}
+            </Typography>
           </Box>
         </Fade>
 
@@ -767,7 +672,7 @@ export default function OnboardingVerifyPage() {
             mx: 'auto',
           }}
         >
-          {/* Form panel - Monochrome glass */}
+          {/* Form panel - Yellow/Glass box */}
           <Card
             elevation={0}
             sx={{
@@ -775,21 +680,17 @@ export default function OnboardingVerifyPage() {
               maxWidth: '100%',
               p: { xs: 3, sm: 4 },
               borderRadius: 4,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
+              // Glassmorphism / Mica effect
+              bgcolor: 'rgba(255, 193, 7, 0.15)',
               backdropFilter: 'blur(20px) saturate(180%)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
           >
             {message && (
               <Alert 
                 severity={message.type} 
-                sx={{ 
-                  mb: 3, 
-                  borderRadius: 2,
-                  bgcolor: message.type === 'error' ? 'rgba(255, 0, 0, 0.08)' : 'rgba(0, 255, 0, 0.08)',
-                  border: message.type === 'error' ? '1px solid rgba(255, 0, 0, 0.2)' : '1px solid rgba(0, 255, 0, 0.2)',
-                }}
+                sx={{ mb: 3, bgcolor: message.type === 'error' ? 'rgba(244, 67, 54, 0.9)' : 'rgba(76, 175, 80, 0.9)' }}
               >
                 {message.text}
               </Alert>
@@ -806,10 +707,10 @@ export default function OnboardingVerifyPage() {
                   onClick={goToPrevStage}
                   disabled={currentStage === 1}
                   sx={{
-                    color: currentStage === 1 ? 'rgba(0,0,0,0.2)' : '#000',
-                    bgcolor: 'rgba(0,0,0,0.05)',
+                    color: currentStage === 1 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
+                    bgcolor: 'rgba(255,255,255,0.1)',
                     '&:hover': {
-                      bgcolor: 'rgba(0,0,0,0.1)',
+                      bgcolor: 'rgba(255,255,255,0.2)',
                     },
                   }}
                 >
@@ -825,7 +726,7 @@ export default function OnboardingVerifyPage() {
                         width: stage === currentStage ? 24 : 8,
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: stage <= currentStage ? '#000' : 'rgba(0,0,0,0.2)',
+                        bgcolor: stage <= currentStage ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)',
                         transition: 'all 0.3s ease',
                       }}
                     />
@@ -837,27 +738,22 @@ export default function OnboardingVerifyPage() {
                     onClick={goToNextStage}
                     disabled={!canProceedFromStage(currentStage)}
                     sx={{
-                      color: !canProceedFromStage(currentStage) ? 'rgba(0,0,0,0.2)' : '#000',
-                      bgcolor: 'rgba(0,0,0,0.05)',
+                      color: !canProceedFromStage(currentStage) ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
+                      bgcolor: 'rgba(255,255,255,0.1)',
                       '&:hover': {
-                        bgcolor: 'rgba(0,0,0,0.1)',
+                        bgcolor: 'rgba(255,255,255,0.2)',
                       },
                     }}
                   >
                     <ArrowForwardIcon />
                   </IconButton>
                 ) : (
-                  <Box sx={{ width: 40 }} />
+                  <Box sx={{ width: 40 }} /> // Placeholder for alignment
                 )}
               </Stack>
             )}
           </Card>
         </Box>
-      </Box>
-
-      {/* Footer */}
-      <Box sx={{ position: 'relative', zIndex: 10 }}>
-        <Footer />
       </Box>
     </Box>
   );

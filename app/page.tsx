@@ -225,7 +225,7 @@ function CountryTabPanel({ children, value, index, ...other }: TabPanelProps) {
 }
 
 export default function Home() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const mounted = useMounted();
   const [countryTab, setCountryTab] = useState(0);
 
@@ -669,29 +669,42 @@ export default function Home() {
               </Box>
             </Fade>
 
-            {/* FAQ */}
+            {/* FAQ Link Section */}
             <Fade in={mounted} timeout={1800}>
-              <Box>
-                <Typography variant="h3" sx={{ mb: 4, fontWeight: 700, textAlign: 'center', color: '#000' }}>
-                  {t.faq.title}
-                </Typography>
-                <Grid container spacing={3}>
-                  {t.faq.items.map((item) => (
-                    <Grid size={{ xs: 12, md: 6 }} key={item.q}>
-                      <GlassCard sx={{ height: '100%' }}>
-                        <CardContent sx={{ p: 4 }}>
-                          <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: '#000' }}>
-                            {item.q}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', lineHeight: 1.7 }}>
-                            {item.a}
-                          </Typography>
-                        </CardContent>
-                      </GlassCard>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
+              <GlassCard>
+                <CardContent sx={{ p: { xs: 4, md: 6 }, textAlign: 'center' }}>
+                  <Typography variant="h4" sx={{ mb: 2, fontWeight: 700, color: '#000' }}>
+                    {t.faq.title}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.6)', mb: 3 }}>
+                    {locale === 'es' 
+                      ? '¿Tienes dudas? Consulta nuestras preguntas frecuentes.'
+                      : 'Have questions? Check out our frequently asked questions.'}
+                  </Typography>
+                  <Button
+                    component={Link}
+                    href="/faq"
+                    variant="contained"
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{
+                      px: 4,
+                      py: 1.5,
+                      bgcolor: '#000',
+                      color: '#fff',
+                      borderRadius: 2,
+                      fontWeight: 700,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        bgcolor: '#222',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                      },
+                    }}
+                  >
+                    {locale === 'es' ? 'Ver FAQ' : 'View FAQ'}
+                  </Button>
+                </CardContent>
+              </GlassCard>
             </Fade>
 
             {/* Docs CTA */}
