@@ -48,41 +48,61 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 bamp-frontend/
 ├── app/
 │   ├── components/
-│   │   └── Header.tsx          # Header global con logo
+│   │   └── Header.tsx          # Header global con logo + nombre
 │   ├── lib/
-│   │   └── stellar.ts          # Integración Stellar X402
+│   │   ├── stellar.ts          # Integración Stellar X402
+│   │   └── i18n.tsx            # Sistema de internacionalización
+│   ├── api/
+│   │   └── webhook/            # Webhook endpoints para AgentBE
+│   │       ├── confirm_verification/  # Recibe confirmaciones
+│   │       └── check_verification/    # Polling de estado
 │   ├── pagos/
 │   │   ├── [id]/
 │   │   │   └── page.tsx        # Página dinámica de pago
 │   │   └── page.tsx            # Info de pagos
+│   ├── onboarding/
+│   │   └── verify/
+│   │       └── page.tsx        # Flujo de onboarding por etapas
 │   ├── PP/
 │   │   └── page.tsx            # Políticas de Privacidad
 │   ├── ToS/
 │   │   └── page.tsx            # Términos de Servicio
 │   ├── layout.tsx              # Layout raíz con tema MUI
-│   ├── page.tsx                # Landing page
-│   ├── providers.tsx           # Provider de MUI Theme
+│   ├── page.tsx                # Landing page (glassmorphism)
+│   ├── providers.tsx           # Provider de MUI Theme + I18n
 │   └── theme.ts                # Configuración del tema
 ├── assets/
 │   └── fonts/
 │       └── StackSansHeadline.ttf
+├── docs/
+│   └── WEBHOOK_ENDPOINTS.md    # Documentación de webhooks
 └── public/
     └── assets/
         └── images/
-            └── icons/
-                └── logotandapaso.png
+            ├── icons/
+            │   └── logopasatanda.svg
+            └── placeholders/
+                └── image.png   # Placeholder para backgrounds
 ```
 
 ## 🎯 Características Principales
 
 ### Rutas
 
-- `/` - Landing Page
+- `/` - Landing Page con diseño glassmorphism
 - `/pagos` - Información sobre pagos
 - `/pagos/[id]` - Página dinámica de pago
-- `/pagos/ABC-123` - Ejemplo de pago de prueba
+- `/onboarding/verify` - Flujo de creación de grupo por etapas
 - `/ToS` - Términos de Servicio
 - `/PP` - Políticas de Privacidad
+- `/docs` - Documentación del proyecto
+
+### API Endpoints (Frontend)
+
+- `POST /api/webhook/confirm_verification` - Recibe confirmaciones de WhatsApp desde AgentBE
+- `GET /api/webhook/check_verification` - Polling para verificar estado de verificación
+
+Ver [docs/WEBHOOK_ENDPOINTS.md](docs/WEBHOOK_ENDPOINTS.md) para documentación completa.
 
 ### Métodos de Pago
 

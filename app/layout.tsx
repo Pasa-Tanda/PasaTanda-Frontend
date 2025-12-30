@@ -5,6 +5,9 @@ import { stackSansHeadline } from "./theme";
 export const metadata: Metadata = {
   title: "PasaTanda - Gestión de Pagos Pasanaku",
   description: "Plataforma de gestión de pagos colaborativos Pasanaku en Stellar",
+  icons: {
+    icon: "/assets/images/icons/logopasatanda.svg",
+  },
 };
 
 export default function RootLayout({
@@ -13,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={stackSansHeadline.variable}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={stackSansHeadline.variable} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -1,176 +1,85 @@
-/**
- * Stellar X402 Payment Integration
- * 
- * Basado en la documentación:
- * - https://www.x402stellar.xyz/docs/core-concepts/x402-stellar-client
- * - https://github.com/mertkaradayi/stellar-x402
- */
+import { getNetworkDetails, isConnected, requestAccess, signTransaction } from '@stellar/freighter-api';
+import { Networks } from '@stellar/stellar-sdk';
+import { createFreighterSigner, createPaymentHeader, PaymentRequirements } from 'x402-stellar-client';
 
-import * as StellarSdk from 'stellar-sdk';
+type NetworkName = 'PUBLIC' | 'TESTNET' | 'FUTURENET' | 'STANDALONE';
 
-// Configuración de la red Stellar (usar testnet para desarrollo)
-const isTestnet = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'testnet';
-const server = new StellarSdk.Horizon.Server(
-  isTestnet
-    ? 'https://horizon-testnet.stellar.org'
-    : 'https://horizon.stellar.org'
-);
+export type XPaymentResult = {
+  xPayment: string;
+  signer: string;
+  network: NetworkName;
+};
 
-export interface PaymentRequest {
-  amount: string;
-  destination: string;
-  memo?: string;
-  assetCode?: string;
-  assetIssuer?: string;
-}
+const defaultNetwork = (): NetworkName => {
+  const envNet = process.env.NEXT_PUBLIC_STELLAR_NETWORK?.toUpperCase();
+  if (envNet === 'PUBLIC' || envNet === 'TESTNET' || envNet === 'FUTURENET' || envNet === 'STANDALONE') return envNet;
+  return 'TESTNET';
+};
 
-export interface PaymentResponse {
-  success: boolean;
-  transactionHash?: string;
-  error?: string;
-}
-
-/**
- * Conecta con la wallet del usuario usando Freighter o similar
- */
-export async function connectWallet(): Promise<string | null> {
-  try {
-    // Verificar si Freighter está instalado
-    if (typeof window !== 'undefined' && (window as any).freighter) {
-      const publicKey = await (window as any).freighter.getPublicKey();
-      return publicKey;
-    } else {
-      throw new Error('Freighter wallet no está instalada');
-    }
-  } catch (error) {
-    console.error('Error al conectar wallet:', error);
-    return null;
+export async function ensureFreighterConnection() {
+  // isConnected returns a boolean directly in newer API
+  const connectionResult = await isConnected();
+  const connected = typeof connectionResult === 'boolean' 
+    ? connectionResult 
+    : (connectionResult as { isConnected?: boolean })?.isConnected;
+  
+  if (!connected) {
+    throw new Error('Instala o habilita Freighter para continuar');
   }
+
+  // requestAccess returns address string or object with address/error
+  const accessResult = await requestAccess();
+  const address = typeof accessResult === 'string' 
+    ? accessResult 
+    : (accessResult as { address?: string; error?: string })?.address;
+  const accessError = typeof accessResult === 'object' 
+    ? (accessResult as { error?: string })?.error 
+    : undefined;
+
+  if (accessError || !address) {
+    throw new Error(accessError || 'No se pudo obtener la dirección de Freighter');
+  }
+
+  const networkDetails = await getNetworkDetails();
+  const networkName = typeof networkDetails === 'string' 
+    ? networkDetails 
+    : (networkDetails as { network?: string })?.network;
+  const networkPassphrase = typeof networkDetails === 'object' 
+    ? (networkDetails as { networkPassphrase?: string })?.networkPassphrase 
+    : undefined;
+  
+  const selectedNetwork = (networkName as NetworkName) || defaultNetwork();
+
+  return {
+    address,
+    network: selectedNetwork,
+    networkPassphrase: networkPassphrase || (selectedNetwork === 'PUBLIC' ? Networks.PUBLIC : Networks.TESTNET),
+  };
 }
 
-/**
- * Realiza un pago en USDC usando Stellar
- */
-export async function makePayment(
-  request: PaymentRequest
-): Promise<PaymentResponse> {
-  try {
-    const sourcePublicKey = await connectWallet();
-    
-    if (!sourcePublicKey) {
-      return {
-        success: false,
-        error: 'No se pudo conectar con la wallet',
-      };
-    }
-
-    // Cargar la cuenta del usuario
-    const account = await server.loadAccount(sourcePublicKey);
-
-    // Definir el asset (USDC)
-    const asset = request.assetCode && request.assetIssuer
-      ? new StellarSdk.Asset(request.assetCode, request.assetIssuer)
-      : new StellarSdk.Asset(
-          'USDC',
-          'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' // USDC issuer en mainnet
-        );
-
-    // Construir la transacción
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee: StellarSdk.BASE_FEE,
-      networkPassphrase: isTestnet
-        ? StellarSdk.Networks.TESTNET
-        : StellarSdk.Networks.PUBLIC,
-    })
-      .addOperation(
-        StellarSdk.Operation.payment({
-          destination: request.destination,
-          asset: asset,
-          amount: request.amount,
-        })
-      )
-      .setTimeout(180);
-
-    // Agregar memo si existe
-    if (request.memo) {
-      transaction.addMemo(StellarSdk.Memo.text(request.memo));
-    }
-
-    const builtTransaction = transaction.build();
-
-    // Firmar con Freighter
-    if (typeof window !== 'undefined' && (window as any).freighter) {
-      const signedTransaction = await (window as any).freighter.signTransaction(
-        builtTransaction.toXDR(),
-        {
-          network: isTestnet ? 'TESTNET' : 'PUBLIC',
-          accountToSign: sourcePublicKey,
-        }
-      );
-
-      // Enviar la transacción
-      const transactionResult = await server.submitTransaction(
-        StellarSdk.TransactionBuilder.fromXDR(
-          signedTransaction,
-          isTestnet
-            ? StellarSdk.Networks.TESTNET
-            : StellarSdk.Networks.PUBLIC
-        )
-      );
-
-      return {
-        success: true,
-        transactionHash: transactionResult.hash,
-      };
-    }
-
-    return {
-      success: false,
-      error: 'No se pudo firmar la transacción',
-    };
-  } catch (error: any) {
-    console.error('Error al procesar el pago:', error);
-    return {
-      success: false,
-      error: error.message || 'Error desconocido',
-    };
+export async function signChallengeXdr(xdr: string, network: NetworkName, address?: string) {
+  // Use accountToSign instead of address for newer Freighter API
+  const signed = await signTransaction(xdr, { network, accountToSign: address });
+  if ((signed as { error?: string }).error) {
+    const err = (signed as { error?: string | { message?: string } }).error;
+    throw new Error(typeof err === 'string' ? err : (err as { message?: string })?.message || 'No se pudo firmar el XDR');
   }
+  // signedTxXdr or direct string return depending on API version
+  const signedXdr = typeof signed === 'string' 
+    ? signed 
+    : (signed as { signedTxXdr?: string }).signedTxXdr;
+  return signedXdr as string;
 }
 
-/**
- * Verifica el estado de una transacción
- */
-export async function verifyPayment(
-  transactionHash: string
-): Promise<boolean> {
-  try {
-    const transaction = await server.transactions()
-      .transaction(transactionHash)
-      .call();
-
-    return transaction.successful;
-  } catch (error) {
-    console.error('Error al verificar pago:', error);
-    return false;
-  }
+export async function createXPaymentFromRequirements(requirements: PaymentRequirements): Promise<XPaymentResult> {
+  const freighter = await ensureFreighterConnection();
+  const signer = createFreighterSigner();
+  const xPayment = await createPaymentHeader({ signer, paymentRequirements: requirements });
+  return { xPayment, signer: freighter.address, network: freighter.network };
 }
 
-/**
- * Obtiene el balance de USDC de una cuenta
- */
-export async function getUSDCBalance(publicKey: string): Promise<string> {
-  try {
-    const account = await server.loadAccount(publicKey);
-    
-    const usdcBalance = account.balances.find(
-      (balance: any) =>
-        balance.asset_code === 'USDC' &&
-        balance.asset_issuer === 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN'
-    );
-
-    return usdcBalance ? usdcBalance.balance : '0';
-  } catch (error) {
-    console.error('Error al obtener balance:', error);
-    return '0';
-  }
+export async function buildXPaymentFromChallenge(xdr: string): Promise<XPaymentResult> {
+  const freighter = await ensureFreighterConnection();
+  const xPayment = await signChallengeXdr(xdr, freighter.network, freighter.address);
+  return { xPayment, signer: freighter.address, network: freighter.network };
 }
