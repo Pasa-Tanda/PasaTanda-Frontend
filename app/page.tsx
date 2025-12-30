@@ -3,7 +3,6 @@
 import {
   Box,
   Button,
-  Card,
   CardContent,
   Chip,
   Container,
@@ -22,6 +21,7 @@ import { useMounted } from './lib/useMounted';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ParticleBackground from './components/ParticleBackground';
+import { GlassCard } from './components/GlassCard';
 import { useI18n } from './lib/i18n';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -37,37 +37,9 @@ type ValueProp = {
   icon: React.ReactNode;
 };
 
-// Glass card component with monochrome theme
-function GlassCard({ children, sx = {}, dark = false, ...props }: { children: React.ReactNode; sx?: object; dark?: boolean; [key: string]: unknown }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: dark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: dark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 4,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          background: dark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-          transform: 'translateY(-8px)',
-          boxShadow: dark 
-            ? '0 25px 50px rgba(0, 0, 0, 0.4)' 
-            : '0 25px 50px rgba(0, 0, 0, 0.15)',
-          border: dark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.2)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-}
-
 function ValuePropCard({ title, body, icon }: ValueProp) {
   return (
-    <GlassCard sx={{ height: '100%' }}>
+    <GlassCard variant="mica" intensity="medium" sx={{ height: '100%' }}>
       <CardContent sx={{ p: 4 }}>
         <Box 
           sx={{ 
@@ -98,7 +70,7 @@ function ValuePropCard({ title, body, icon }: ValueProp) {
 
 function StepCard({ index, text }: { index: number; text: string }) {
   return (
-    <GlassCard sx={{ mb: 2 }}>
+    <GlassCard variant="mica" intensity="subtle" sx={{ mb: 2 }}>
       <CardContent sx={{ py: 2.5, px: 3 }}>
         <Stack direction="row" spacing={3} alignItems="center">
           <Box
@@ -275,7 +247,7 @@ export default function Home() {
             {/* Hero Section */}
             <Fade in={mounted} timeout={800}>
               <Box>
-                <GlassCard>
+                <GlassCard variant="mica" intensity="medium" glow>
                   <CardContent sx={{ p: { xs: 4, md: 8 } }}>
                     <Grid container spacing={6} alignItems="center">
                       <Grid size={{ xs: 12, md: 7 }}>
@@ -397,7 +369,7 @@ export default function Home() {
                         </Stack>
                       </Grid>
                       <Grid size={{ xs: 12, md: 5 }}>
-                        <GlassCard dark>
+                        <GlassCard variant="mica" dark intensity="medium">
                           <CardContent sx={{ p: 4 }}>
                             <Typography variant="h6" sx={{ mb: 3, color: '#fff', fontWeight: 700 }}>
                               Flujo unificado
@@ -444,7 +416,7 @@ export default function Home() {
                 <Typography variant="body1" sx={{ mb: 4, textAlign: 'center', color: 'rgba(0,0,0,0.6)', maxWidth: 600, mx: 'auto' }}>
                   PasaTanda soporta múltiples métodos de pago locales en Latinoamérica, además de USDC en Stellar.
                 </Typography>
-                <GlassCard>
+                <GlassCard variant="mica" intensity="medium">
                   <CardContent sx={{ p: { xs: 2, md: 4 } }}>
                     <Tabs
                       value={countryTab}
@@ -570,7 +542,7 @@ export default function Home() {
 
             {/* On/Off ramp Section */}
             <Fade in={mounted} timeout={1400}>
-              <GlassCard dark>
+              <GlassCard variant="frosted" dark intensity="medium">
                 <CardContent sx={{ p: { xs: 4, md: 6 } }}>
                   <Grid container spacing={4} alignItems="center">
                     <Grid size={{ xs: 12, md: 7 }}>
@@ -671,7 +643,7 @@ export default function Home() {
 
             {/* FAQ Link Section */}
             <Fade in={mounted} timeout={1800}>
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 4, md: 6 }, textAlign: 'center' }}>
                   <Typography variant="h4" sx={{ mb: 2, fontWeight: 700, color: '#000' }}>
                     {t.faq.title}
@@ -709,7 +681,7 @@ export default function Home() {
 
             {/* Docs CTA */}
             <Fade in={mounted} timeout={2000}>
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium" glow>
                 <CardContent sx={{ p: { xs: 4, md: 6 } }}>
                   <Stack
                     spacing={3}

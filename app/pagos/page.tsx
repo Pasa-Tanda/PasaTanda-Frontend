@@ -5,7 +5,6 @@ import {
   Container, 
   Typography, 
   Stack, 
-  Card, 
   CardContent, 
   Button, 
   Avatar,
@@ -18,38 +17,13 @@ import Header from '../components/Header';
 import { useMounted } from '../lib/useMounted';
 import Footer from '../components/Footer';
 import ParticleBackground from '../components/ParticleBackground';
+import { GlassCard } from '../components/GlassCard';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
-
-// Glass card component
-function GlassCard({ children, sx = {}, dark = false, ...props }: { children: React.ReactNode; sx?: object; dark?: boolean; [key: string]: unknown }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: dark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: dark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 4,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: dark 
-            ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
-            : '0 20px 40px rgba(0, 0, 0, 0.1)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-}
 
 // Payment method card
 function PaymentMethodCard({ 
@@ -66,7 +40,7 @@ function PaymentMethodCard({
   dark?: boolean;
 }) {
   return (
-    <GlassCard dark={dark} sx={{ height: '100%' }}>
+    <GlassCard variant="mica" dark={dark} intensity="medium" sx={{ height: '100%' }}>
       <CardContent sx={{ p: 4 }}>
         <Stack spacing={3}>
           <Avatar
@@ -197,7 +171,7 @@ export default function PagosInfo() {
           <Fade in={mounted} timeout={600}>
             <Stack spacing={6}>
               {/* Header */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium" glow>
                 <CardContent sx={{ p: { xs: 3, md: 5 } }}>
                   <Grid container spacing={4} alignItems="center">
                     <Grid size={{ xs: 12, md: 7 }}>
@@ -297,7 +271,7 @@ export default function PagosInfo() {
               </Grid>
 
               {/* How it works */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack spacing={4}>
                     <Typography variant="h5" sx={{ fontWeight: 700, color: '#000' }}>
@@ -356,7 +330,7 @@ export default function PagosInfo() {
               </GlassCard>
 
               {/* CTA */}
-              <GlassCard dark>
+              <GlassCard variant="frosted" dark intensity="medium">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack 
                     direction={{ xs: 'column', md: 'row' }} 

@@ -12,12 +12,14 @@ sequenceDiagram
     U->>FE: Escribe numero de whatsapp y verifica
     FE->>A: GET /api/verify
     A->>FE: Tu codigo de verificacion es XXXX
+    FE->>U: Mostrar codigo de verificacion en la pagina mas un boton para enviarlo al bot
     U->>WA: enviar mensaje de verificacion al numero del bot
     WA-->>U: Verificacion correcta
     WA-->>A: /webhook extraer numero de whatsapp, username
     A->>A: guarda datos del usuario de wsp para crear al usuario luego (numero y username)
     A->>FE: numero verificado exitosamente (POST api/webhook/confirm verification) [+ datos de wsp]
-    U->>FE: Envia todos los datos de creacion del grupo
+    FE->>U: Muestra un resumen de todos los datos (+ los recibidos en el webhook)
+    U->>FE: Confirma y envia todos los datos de creacion del grupo
     FE->>A: POST api/onboarding
     Note over FE, A: NO CREA CONTRATOS DE SOROBAN AUN (no se da inicio a la tanda)
     A->>A: crea keypairs de stellar

@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Card,
   CardContent,
   Container,
   Stack,
@@ -26,23 +25,7 @@ import ParticleBackground from '../../components/ParticleBackground';
 import { useI18n } from '../../lib/i18n';
 import { useMounted } from '../../lib/useMounted';
 import { useState } from 'react';
-
-function GlassCard({ children, sx = {} }: { children: React.ReactNode; sx?: object }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 3,
-        ...sx,
-      }}
-    >
-      {children}
-    </Card>
-  );
-}
+import { GlassCard } from '../../components/GlassCard';
 
 function CodeBlock({ code, language = 'typescript' }: { code: string; language?: string }) {
   return (
@@ -274,7 +257,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
               {/* Stellar Wallet Tab */}
               <TabPanel value={tab} index={0}>
                 <Stack spacing={3}>
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="medium" glow>
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         stellar-wallets-kit
@@ -288,7 +271,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="subtle">
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         {locale === 'es' ? 'Trustlines USDC' : 'USDC Trustlines'}
@@ -307,7 +290,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
               {/* X402 Protocol Tab */}
               <TabPanel value={tab} index={1}>
                 <Stack spacing={3}>
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="medium" glow>
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         {locale === 'es' ? 'Flujo de Pago X402' : 'X402 Payment Flow'}
@@ -329,7 +312,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="subtle">
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         X-PAYMENT Header
@@ -352,7 +335,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
               {/* WhatsApp Bot Tab */}
               <TabPanel value={tab} index={2}>
                 <Stack spacing={3}>
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="medium" glow>
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         {locale === 'es' ? 'Webhook de WhatsApp' : 'WhatsApp Webhook'}
@@ -366,7 +349,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="subtle">
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                         {locale === 'es' ? 'Crear Tanda (Onboarding)' : 'Create Tanda (Onboarding)'}
@@ -375,7 +358,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="frosted" intensity="medium">
                     <CardContent sx={{ p: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 2 }}>
                         {locale === 'es' ? 'Comandos del Bot' : 'Bot Commands'}

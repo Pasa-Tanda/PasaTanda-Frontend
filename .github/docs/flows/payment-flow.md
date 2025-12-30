@@ -8,23 +8,16 @@ sequenceDiagram
     autonumber
 
     rect rgb(230, 240, 255)
-        note right of User: --- FASE 1: GENERACIÓN DE COBRO (Inicio de tanda) ---
-        User->>AgentBE: Admin escribe "iniciar tanda" en grupo WA
-        AgentBE->>PayBE: POST /api/soroban/groups (deploy contrato)
-        PayBE->>Stellar: despliega contrato
-        PayBE-->>AgentBE: groupAddress
-        AgentBE->>AgentBE: Crea payment_order inicial (link dinámico)
-        AgentBE->>AgentBE: Cron Job: Próximos ciclos de pago (cada frecuencia)
+        note right of User: --- FASE 1: GENERACIÓN DE COBRO (Discovery) ---
+        AgentBE->>AgentBE: Cron Job: Nuevo ciclo de pago
         AgentBE->>PayBE: GET /api/pay (Sin Payload)
-        
         par Preparación de Métodos
             PayBE->>Bank: Genera QR Simple
             PayBE->>PayBE: Genera Challenge X402 (Unsigned Transaction XDR)
         end
-        
         PayBE-->>AgentBE: 402 Payment Required
         Note right of PayBE: Header: WWW-Authenticate: x402 <Challenge_XDR><br/>Body: { qr_url: "ipfs://..." }
-        
+      AgentBE->>AgentBE: agregar direccion del contrato en el payload "payTo" andes de subir el XDRChallenge a supabase
         AgentBE->>User: WhatsApp: "Es tu turno. Paga aquí: /pagos/{uuid}"
     end
 
@@ -71,7 +64,6 @@ sequenceDiagram
                 PayBE-->>AgentBE: 200 OK (Body: { tx_hash: "..." })
                 AgentBE->>AgentBE: Status: COMPLETED
                 AgentBE->>User: WhatsApp: "Pago Fiat validado y registrado en Blockchain."
-                AgentBE->>AgentBE: Evalúa si todos los miembros pagaron; solo entonces programa payout del turno
             else Banco Rechaza
                 PayBE-->>AgentBE: 404 Not Found / 400 Bad Request
                 AgentBE->>AgentBE: Status: REJECTED
@@ -91,7 +83,6 @@ sequenceDiagram
                 PayBE-->>AgentBE: 200 OK (Resource Released / Receipt)
                 AgentBE->>AgentBE: Status: COMPLETED
                 AgentBE->>User: WhatsApp: "Pago Crypto exitoso."
-                AgentBE->>AgentBE: Evalúa si todos los miembros pagaron; solo entonces programa payout del turno
             else Tx Fallida
                 Stellar-->>PayBE: Error Code
                 PayBE-->>AgentBE: 402 Payment Required (Re-Challenge o Error)

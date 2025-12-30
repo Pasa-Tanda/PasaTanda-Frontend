@@ -5,7 +5,7 @@ import {
   Alert,
   Box,
   Button,
-  Card,
+  CardContent,
   FormControlLabel,
   IconButton,
   Link as MuiLink,
@@ -30,6 +30,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import { GlassCard } from '../../components/GlassCard';
 import { useI18n } from '../../lib/i18n';
 import { useMounted } from '../../lib/useMounted';
 
@@ -767,91 +768,89 @@ export default function OnboardingVerifyPage() {
             mx: 'auto',
           }}
         >
-          {/* Form panel - Monochrome glass */}
-          <Card
-            elevation={0}
+          {/* Form panel - Mica Glass */}
+          <GlassCard
+            variant="mica"
+            intensity="medium"
+            glow
             sx={{
               width: { xs: '100%', sm: 450 },
               maxWidth: '100%',
-              p: { xs: 3, sm: 4 },
-              borderRadius: 4,
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             }}
           >
-            {message && (
-              <Alert 
-                severity={message.type} 
-                sx={{ 
-                  mb: 3, 
-                  borderRadius: 2,
-                  bgcolor: message.type === 'error' ? 'rgba(255, 0, 0, 0.08)' : 'rgba(0, 255, 0, 0.08)',
-                  border: message.type === 'error' ? '1px solid rgba(255, 0, 0, 0.2)' : '1px solid rgba(0, 255, 0, 0.2)',
-                }}
-              >
-                {message.text}
-              </Alert>
-            )}
-
-            <Fade in key={`content-${currentStage}`}>
-              <Box>{renderStageContent()}</Box>
-            </Fade>
-
-            {/* Navigation */}
-            {currentStage < 5 && (
-              <Stack direction="row" justifyContent="space-between" sx={{ mt: 4 }}>
-                <IconButton
-                  onClick={goToPrevStage}
-                  disabled={currentStage === 1}
-                  sx={{
-                    color: currentStage === 1 ? 'rgba(0,0,0,0.2)' : '#000',
-                    bgcolor: 'rgba(0,0,0,0.05)',
-                    '&:hover': {
-                      bgcolor: 'rgba(0,0,0,0.1)',
-                    },
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+              {message && (
+                <Alert 
+                  severity={message.type} 
+                  sx={{ 
+                    mb: 3, 
+                    borderRadius: 2,
+                    bgcolor: message.type === 'error' ? 'rgba(255, 0, 0, 0.08)' : 'rgba(0, 255, 0, 0.08)',
+                    border: message.type === 'error' ? '1px solid rgba(255, 0, 0, 0.2)' : '1px solid rgba(0, 255, 0, 0.2)',
                   }}
                 >
-                  <ArrowBackIcon />
-                </IconButton>
+                  {message.text}
+                </Alert>
+              )}
 
-                {/* Stage indicator */}
-                <Stack direction="row" spacing={1} alignItems="center">
-                  {[1, 2, 3, 4].map((stage) => (
-                    <Box
-                      key={stage}
-                      sx={{
-                        width: stage === currentStage ? 24 : 8,
-                        height: 8,
-                        borderRadius: 4,
-                        bgcolor: stage <= currentStage ? '#000' : 'rgba(0,0,0,0.2)',
-                        transition: 'all 0.3s ease',
-                      }}
-                    />
-                  ))}
-                </Stack>
+              <Fade in key={`content-${currentStage}`}>
+                <Box>{renderStageContent()}</Box>
+              </Fade>
 
-                {currentStage < 4 ? (
+              {/* Navigation */}
+              {currentStage < 5 && (
+                <Stack direction="row" justifyContent="space-between" sx={{ mt: 4 }}>
                   <IconButton
-                    onClick={goToNextStage}
-                    disabled={!canProceedFromStage(currentStage)}
+                    onClick={goToPrevStage}
+                    disabled={currentStage === 1}
                     sx={{
-                      color: !canProceedFromStage(currentStage) ? 'rgba(0,0,0,0.2)' : '#000',
+                      color: currentStage === 1 ? 'rgba(0,0,0,0.2)' : '#000',
                       bgcolor: 'rgba(0,0,0,0.05)',
                       '&:hover': {
                         bgcolor: 'rgba(0,0,0,0.1)',
                       },
                     }}
                   >
-                    <ArrowForwardIcon />
+                    <ArrowBackIcon />
                   </IconButton>
-                ) : (
-                  <Box sx={{ width: 40 }} />
-                )}
-              </Stack>
-            )}
-          </Card>
+
+                  {/* Stage indicator */}
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {[1, 2, 3, 4].map((stage) => (
+                      <Box
+                        key={stage}
+                        sx={{
+                          width: stage === currentStage ? 24 : 8,
+                          height: 8,
+                          borderRadius: 4,
+                          bgcolor: stage <= currentStage ? '#000' : 'rgba(0,0,0,0.2)',
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                    ))}
+                  </Stack>
+
+                  {currentStage < 4 ? (
+                    <IconButton
+                      onClick={goToNextStage}
+                      disabled={!canProceedFromStage(currentStage)}
+                      sx={{
+                        color: !canProceedFromStage(currentStage) ? 'rgba(0,0,0,0.2)' : '#000',
+                        bgcolor: 'rgba(0,0,0,0.05)',
+                        '&:hover': {
+                          bgcolor: 'rgba(0,0,0,0.1)',
+                        },
+                      }}
+                    >
+                      <ArrowForwardIcon />
+                    </IconButton>
+                  ) : (
+                    <Box sx={{ width: 40 }} />
+                  )}
+                </Stack>
+              )}
+            </CardContent>
+          </GlassCard>
         </Box>
       </Box>
 

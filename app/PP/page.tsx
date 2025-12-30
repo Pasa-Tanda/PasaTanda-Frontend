@@ -1,39 +1,18 @@
 'use client';
 
-import { Box, Container, Typography, Stack, Card, CardContent, Divider, Fade } from '@mui/material';
+import { Box, Container, Typography, Stack, CardContent, Divider, Fade } from '@mui/material';
 import Header from '../components/Header';
 import { useMounted } from '../lib/useMounted';
 import Footer from '../components/Footer';
 import ParticleBackground from '../components/ParticleBackground';
+import { GlassCard } from '../components/GlassCard';
+import { useI18n } from '../lib/i18n';
 import SecurityIcon from '@mui/icons-material/Security';
 import StorageIcon from '@mui/icons-material/Storage';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-// Glass card component
-function GlassCard({ children, sx = {}, ...props }: { children: React.ReactNode; sx?: object; [key: string]: unknown }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 4,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-}
-
-// Privacy section component
+// Privacy section component with Mica styling
 function PrivacySection({ 
   icon, 
   title, 
@@ -48,13 +27,15 @@ function PrivacySection({
       sx={{
         p: 3,
         borderRadius: 3,
-        border: '1px solid rgba(0,0,0,0.08)',
-        bgcolor: 'rgba(0,0,0,0.02)',
-        transition: 'all 0.3s ease',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(250,250,255,0.2) 100%)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0,0,0,0.06)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          bgcolor: 'rgba(0,0,0,0.04)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(250,250,255,0.4) 100%)',
           transform: 'translateX(4px)',
-          borderColor: 'rgba(0,0,0,0.15)',
+          borderColor: 'rgba(0,0,0,0.12)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
         },
       }}
     >
@@ -64,11 +45,12 @@ function PrivacySection({
             width: 48,
             height: 48,
             borderRadius: 2,
-            bgcolor: '#000',
+            background: 'linear-gradient(135deg, #000 0%, #333 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           }}
         >
           {icon}
@@ -88,27 +70,28 @@ function PrivacySection({
 
 export default function PrivacyPolicy() {
   const mounted = useMounted();
+  const { t } = useI18n();
 
   const privacySections = [
     {
       icon: <StorageIcon sx={{ color: '#fff' }} />,
-      title: '1. Información que Recopilamos',
-      content: 'PasaTanda minimiza la recopilación de datos personales. No almacenamos información personal sensible. Las direcciones de wallet y transacciones son registradas en la blockchain de Stellar de forma pública y transparente.',
+      title: t.privacy.sections.collection.title,
+      content: t.privacy.sections.collection.content,
     },
     {
       icon: <VisibilityOffIcon sx={{ color: '#fff' }} />,
-      title: '2. Uso de la Información',
-      content: 'La información de las transacciones es pública en la blockchain de Stellar y se utiliza únicamente para verificar pagos, gestionar turnos de la tanda y mantener el registro del contrato inteligente.',
+      title: t.privacy.sections.usage.title,
+      content: t.privacy.sections.usage.content,
     },
     {
       icon: <LockIcon sx={{ color: '#fff' }} />,
-      title: '3. Seguridad',
-      content: 'Nos comprometemos a proteger la seguridad de tu información mediante el uso de tecnología blockchain y contratos inteligentes auditables. Las llaves privadas nunca son almacenadas en nuestros servidores.',
+      title: t.privacy.sections.security.title,
+      content: t.privacy.sections.security.content,
     },
     {
       icon: <SecurityIcon sx={{ color: '#fff' }} />,
-      title: '4. Tus Derechos',
-      content: 'Tienes derecho a acceder, rectificar y eliminar tus datos personales (cuando no estén en blockchain). Para ejercer estos derechos, contacta a nuestro equipo de soporte.',
+      title: t.privacy.sections.rights.title,
+      content: t.privacy.sections.rights.content,
     },
   ];
 
@@ -124,14 +107,14 @@ export default function PrivacyPolicy() {
       {/* Particle Background */}
       <ParticleBackground variant="stars" />
 
-      {/* Grid overlay */}
+      {/* Grid overlay with subtle mica tint */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px)
+            linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
           pointerEvents: 'none',
@@ -147,7 +130,7 @@ export default function PrivacyPolicy() {
           <Fade in={mounted} timeout={600}>
             <Stack spacing={4}>
               {/* Header */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium" glow>
                 <CardContent sx={{ p: { xs: 3, md: 5 } }}>
                   <Stack spacing={2}>
                     <Box
@@ -155,31 +138,31 @@ export default function PrivacyPolicy() {
                         width: 64,
                         height: 64,
                         borderRadius: 3,
-                        bgcolor: '#000',
+                        background: 'linear-gradient(135deg, #000 0%, #333 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                       }}
                     >
                       <SecurityIcon sx={{ color: '#fff', fontSize: 32 }} />
                     </Box>
                     <Typography variant="h2" sx={{ fontWeight: 800, color: '#000' }}>
-                      Políticas de Privacidad
+                      {t.privacy.title}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.5)' }}>
-                      Última actualización: 24 de diciembre de 2025
+                      {t.privacy.lastUpdated}: 24 de diciembre de 2025
                     </Typography>
-                    <Divider />
+                    <Divider sx={{ borderColor: 'rgba(0,0,0,0.06)' }} />
                     <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)', lineHeight: 1.8 }}>
-                      En PasaTanda, valoramos tu privacidad y nos comprometemos a proteger tus datos. 
-                      Esta política describe cómo recopilamos, usamos y protegemos tu información.
+                      {t.privacy.intro}
                     </Typography>
                   </Stack>
                 </CardContent>
               </GlassCard>
 
               {/* Privacy Sections */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack spacing={3}>
                     {privacySections.map((section) => (
@@ -195,22 +178,22 @@ export default function PrivacyPolicy() {
               </GlassCard>
 
               {/* Contact */}
-              <GlassCard>
+              <GlassCard variant="frosted" intensity="medium">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack spacing={2}>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: '#000' }}>
-                      5. Contacto
+                      5. {t.footer.contact}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.7)', lineHeight: 1.7 }}>
-                      Si tienes preguntas sobre esta política de privacidad o sobre cómo manejamos tus datos, 
-                      puedes contactarnos a través de nuestro canal de WhatsApp o por correo electrónico.
+                      {t.privacy.contact}
                     </Typography>
                     <Box
                       sx={{
                         p: 2,
                         borderRadius: 2,
-                        bgcolor: 'rgba(0,0,0,0.03)',
-                        border: '1px solid rgba(0,0,0,0.08)',
+                        background: 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)',
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        backdropFilter: 'blur(8px)',
                       }}
                     >
                       <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', fontFamily: 'monospace' }}>

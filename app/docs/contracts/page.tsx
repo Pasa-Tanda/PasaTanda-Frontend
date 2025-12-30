@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Card,
   CardContent,
   Container,
   Stack,
@@ -27,23 +26,7 @@ import Footer from '../../components/Footer';
 import ParticleBackground from '../../components/ParticleBackground';
 import { useI18n } from '../../lib/i18n';
 import { useMounted } from '../../lib/useMounted';
-
-function GlassCard({ children, sx = {} }: { children: React.ReactNode; sx?: object }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 3,
-        ...sx,
-      }}
-    >
-      {children}
-    </Card>
-  );
-}
+import { GlassCard } from '../../components/GlassCard';
 
 function CodeBlock({ code }: { code: string }) {
   return (
@@ -259,7 +242,7 @@ pool_client.submit(
 
               {/* Contracts */}
               {contracts.map((contract) => (
-                <GlassCard key={contract.name}>
+                <GlassCard key={contract.name} variant="mica" intensity="subtle" glow>
                   <CardContent sx={{ p: 4 }}>
                     <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
                       <AccountTreeIcon sx={{ fontSize: 32, color: '#000' }} />
@@ -343,7 +326,7 @@ pool_client.submit(
               ))}
 
               {/* Blend Integration */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium">
                 <CardContent sx={{ p: 4 }}>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                     {locale === 'es' ? 'Integración con Blend Protocol' : 'Blend Protocol Integration'}
@@ -358,7 +341,7 @@ pool_client.submit(
               </GlassCard>
 
               {/* Create Group Params */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: 4 }}>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                     CreateGroupParams

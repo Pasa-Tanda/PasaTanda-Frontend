@@ -2,7 +2,6 @@
 
 import { 
   Box, 
-  Card, 
   CardContent, 
   Container, 
   Stack, 
@@ -23,6 +22,7 @@ import { useMounted } from '../lib/useMounted';
 import Footer from '../components/Footer';
 import ParticleBackground from '../components/ParticleBackground';
 import { useI18n } from '../lib/i18n';
+import { GlassCard } from '../components/GlassCard';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CodeIcon from '@mui/icons-material/Code';
 import ApiIcon from '@mui/icons-material/Api';
@@ -30,29 +30,6 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
-
-// Glass card component
-function GlassCard({ children, sx = {}, ...props }: { children: React.ReactNode; sx?: object; [key: string]: unknown }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 4,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-}
 
 // API Endpoint component
 function ApiEndpoint({ method, path, description }: { method: string; path: string; description: string }) {
@@ -183,7 +160,7 @@ export default function DocsPage() {
           <Fade in={mounted} timeout={600}>
             <Stack spacing={4}>
               {/* Header Card */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium" glow>
                 <CardContent sx={{ p: { xs: 3, md: 5 } }}>
                   <Stack spacing={3}>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -217,6 +194,9 @@ export default function DocsPage() {
                 {docSections.map((section) => (
                   <GlassCard 
                     key={section.href}
+                    variant="mica"
+                    intensity="subtle"
+                    glow
                     component={Link}
                     href={section.href}
                     sx={{ 
@@ -262,7 +242,7 @@ export default function DocsPage() {
               </Box>
 
               {/* API Reference */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack spacing={3}>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -289,7 +269,7 @@ export default function DocsPage() {
               </GlassCard>
 
               {/* Documentation Sections */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack spacing={3}>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -354,7 +334,7 @@ export default function DocsPage() {
               </GlassCard>
 
               {/* CTA */}
-              <GlassCard>
+              <GlassCard variant="frosted" intensity="medium">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack 
                     direction={{ xs: 'column', md: 'row' }} 
@@ -364,10 +344,10 @@ export default function DocsPage() {
                   >
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: '#000' }}>
-                        ¿Listo para comenzar?
+                        {locale === 'es' ? '¿Listo para comenzar?' : 'Ready to get started?'}
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)' }}>
-                        Crea tu primera tanda o prueba el flujo de pagos.
+                        {locale === 'es' ? 'Crea tu primera tanda o prueba el flujo de pagos.' : 'Create your first tanda or test the payment flow.'}
                       </Typography>
                     </Box>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>

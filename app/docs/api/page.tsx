@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Card,
   CardContent,
   Container,
   Stack,
@@ -27,23 +26,7 @@ import Footer from '../../components/Footer';
 import ParticleBackground from '../../components/ParticleBackground';
 import { useI18n } from '../../lib/i18n';
 import { useMounted } from '../../lib/useMounted';
-
-function GlassCard({ children, sx = {} }: { children: React.ReactNode; sx?: object }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 3,
-        ...sx,
-      }}
-    >
-      {children}
-    </Card>
-  );
-}
+import { GlassCard } from '../../components/GlassCard';
 
 function CodeBlock({ code }: { code: string }) {
   return (
@@ -297,7 +280,7 @@ export default function APIDocsPage() {
               {activeTab === 0 && (
                 <Stack spacing={4}>
                   {endpoints.map((category) => (
-                    <GlassCard key={category.category}>
+                    <GlassCard key={category.category} variant="mica" intensity="subtle">
                       <CardContent sx={{ p: 3 }}>
                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 3 }}>
                           {category.category}
@@ -354,7 +337,7 @@ export default function APIDocsPage() {
 
               {activeTab === 1 && (
                 <Stack spacing={4}>
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="medium" glow>
                     <CardContent sx={{ p: 3 }}>
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                         <CodeIcon sx={{ color: '#000' }} />
@@ -366,7 +349,7 @@ export default function APIDocsPage() {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="subtle">
                     <CardContent sx={{ p: 3 }}>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: '#000', mb: 2 }}>
                         Claim Fiat Payment
@@ -375,7 +358,7 @@ export default function APIDocsPage() {
                     </CardContent>
                   </GlassCard>
 
-                  <GlassCard>
+                  <GlassCard variant="mica" intensity="subtle">
                     <CardContent sx={{ p: 3 }}>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: '#000', mb: 2 }}>
                         Claim Crypto Payment

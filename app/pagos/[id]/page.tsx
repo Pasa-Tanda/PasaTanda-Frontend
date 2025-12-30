@@ -49,7 +49,9 @@ import {
   disconnectWallet,
   TrustlineStatus,
   WalletInfo,
+  PAYMENT_TOKEN,
 } from '../../lib/stellar-wallet';
+import { GlassCard } from '../../components/GlassCard';
 
 type PaymentMethod = 'qrsimple' | 'stellar';
 
@@ -67,31 +69,6 @@ type Order = {
   roundNumber?: number;
   dueDate?: string;
 };
-
-// Glass card component with monochrome theme
-function GlassCard({ children, sx = {}, dark = false, ...props }: { children: React.ReactNode; sx?: object; dark?: boolean; [key: string]: unknown }) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        background: dark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        border: dark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: 4,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          boxShadow: dark 
-            ? '0 20px 40px rgba(0, 0, 0, 0.3)' 
-            : '0 20px 40px rgba(0, 0, 0, 0.1)',
-        },
-        ...sx,
-      }}
-      {...props}
-    >
-      {children}
-    </Card>
-  );
-}
 
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
@@ -289,22 +266,25 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
       const result = await addUsdcTrustline(walletInfo.address);
       
       if (result.success) {
-        setTrustlineStatus({ exists: true, balance: '0', limit: '922337203685.4775807' });
+        setTrustlineStatus({ 
+          exists: true, 
+          balance: '0', 
+          limit: '922337203685.4775807',
+          assetCode: result.assetCode,
+          assetIssuer: result.assetIssuer,
+        });
         setTrustlineDialogOpen(false);
-        setSuccess(locale === 'es' 
-          ? `Trustline USDC agregada correctamente. TX: ${result.txHash?.substring(0, 8)}...` 
-          : `USDC trustline added successfully. TX: ${result.txHash?.substring(0, 8)}...`
-        );
+        setSuccess(`${t.payment.trustlineAdded}. TX: ${result.txHash?.substring(0, 8)}...`);
       } else {
         throw new Error(result.error);
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : locale === 'es' ? 'Error al agregar trustline' : 'Error adding trustline';
+      const errorMessage = err instanceof Error ? err.message : t.payment.errorProcessing;
       setError(errorMessage);
     } finally {
       setTrustlineLoading(false);
     }
-  }, [walletInfo?.address, locale]);
+  }, [walletInfo?.address, t.payment.trustlineAdded, t.payment.errorProcessing]);
 
   const handleCryptoClaim = async () => {
     setLoading(true);
@@ -424,7 +404,7 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
           <Fade in={mounted} timeout={600}>
             <Stack spacing={3}>
               {/* Order Header Card */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="medium" glow>
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Stack 
                     direction={{ xs: 'column', md: 'row' }} 
@@ -498,7 +478,7 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
               )}
 
               {/* Payment Content */}
-              <GlassCard>
+              <GlassCard variant="mica" intensity="subtle">
                 <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Grid container spacing={4}>
                     {/* Left Column - Summary */}
@@ -907,46 +887,49 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
         <Footer />
       </Box>
 
-      {/* Trustline Dialog */}
+      {/* Trustline Dialog - Mica Style */}
       <Dialog 
         open={trustlineDialogOpen} 
         onClose={() => !trustlineLoading && setTrustlineDialogOpen(false)}
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            maxWidth: 400,
+            borderRadius: 4,
+            maxWidth: 420,
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 250, 255, 0.92) 100%)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.15)',
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          {locale === 'es' ? 'Trustline USDC Requerida' : 'USDC Trustline Required'}
+        <DialogTitle sx={{ fontWeight: 700, color: '#000' }}>
+          {t.payment.trustlineRequired}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.7)' }}>
-              {locale === 'es'
-                ? 'Para recibir pagos en USDC, necesitas agregar una trustline para el token USDC en tu wallet. Esto es una operación única.'
-                : 'To receive USDC payments, you need to add a trustline for the USDC token in your wallet. This is a one-time operation.'}
+              {t.payment.trustlineDesc}
             </Typography>
             <Box 
               sx={{ 
-                bgcolor: 'rgba(0,0,0,0.03)', 
+                background: 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%)',
                 p: 2, 
-                borderRadius: 2,
-                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: 3,
+                border: '1px solid rgba(0,0,0,0.06)',
+                backdropFilter: 'blur(10px)',
               }}
             >
               <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.5)', display: 'block' }}>
                 Token
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#000' }}>
-                USDC (Blend Testnet)
+                {PAYMENT_TOKEN.code} (Stellar Testnet)
               </Typography>
-              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(0,0,0,0.5)', fontSize: '0.65rem' }}>
-                CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU
+              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(0,0,0,0.5)', fontSize: '0.65rem', wordBreak: 'break-all' }}>
+                {PAYMENT_TOKEN.issuer}
               </Typography>
             </Box>
-            {trustlineLoading && <LinearProgress sx={{ borderRadius: 1 }} />}
+            {trustlineLoading && <LinearProgress sx={{ borderRadius: 1, bgcolor: 'rgba(0,0,0,0.05)' }} />}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -955,20 +938,24 @@ export default function PaymentPage({ params }: { params: Promise<PageParams> })
             disabled={trustlineLoading}
             sx={{ color: 'rgba(0,0,0,0.5)' }}
           >
-            {locale === 'es' ? 'Cancelar' : 'Cancel'}
+            {t.common.cancel}
           </Button>
           <Button 
             variant="contained" 
             onClick={handleAddTrustline}
             disabled={trustlineLoading}
             sx={{
-              bgcolor: '#000',
-              '&:hover': { bgcolor: '#222' },
+              background: 'linear-gradient(135deg, #000 0%, #333 100%)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+              '&:hover': { 
+                background: 'linear-gradient(135deg, #222 0%, #444 100%)',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+              },
             }}
           >
             {trustlineLoading 
               ? <CircularProgress size={20} sx={{ color: '#fff' }} />
-              : (locale === 'es' ? 'Agregar Trustline' : 'Add Trustline')
+              : t.payment.addTrustline
             }
           </Button>
         </DialogActions>

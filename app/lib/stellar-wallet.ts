@@ -9,12 +9,19 @@ import {
 } from '@creit.tech/stellar-wallets-kit';
 import { Networks, TransactionBuilder, Operation, Asset, Horizon } from '@stellar/stellar-sdk';
 
-// USDC Test Token on BLEND (Testnet)
-const USDC_BLEND_TESTNET = {
-  contractAddress: 'CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU',
-  code: 'USDC',
-  issuer: 'CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU',
+/**
+ * USDC Token Configuration (Stellar Testnet)
+ * @see https://stellar.expert/explorer/testnet/asset/USDC-GATALTGTWIOT6BUDBCZM3Q4OQ4BO2COLOAZ7IYSKPLC2PMSOPPGF5V56
+ * 
+ * Note: This can be overridden by environment variables
+ */
+const USDC_TOKEN = {
+  code: process.env.NEXT_PUBLIC_USDC_ASSET_CODE || 'USDC',
+  issuer: process.env.NEXT_PUBLIC_USDC_ASSET_ISSUER || 'GATALTGTWIOT6BUDBCZM3Q4OQ4BO2COLOAZ7IYSKPLC2PMSOPPGF5V56',
 };
+
+// Horizon server URL
+const HORIZON_URL = process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org';
 
 // Singleton wallet kit instance
 let walletKitInstance: StellarWalletsKit | null = null;
@@ -30,6 +37,8 @@ export type TrustlineStatus = {
   exists: boolean;
   balance?: string;
   limit?: string;
+  assetCode?: string;
+  assetIssuer?: string;
 };
 
 /**
@@ -127,10 +136,11 @@ export async function signTransaction(
 }
 
 /**
- * Check if the user has a trustline for USDC BLEND
+ * Check if the user has a trustline for USDC
+ * @see https://developers.stellar.org/docs/build/guides/basics/verify-trustlines
  */
 export async function checkUsdcTrustline(address: string): Promise<TrustlineStatus> {
-  const server = new Horizon.Server('https://horizon-testnet.stellar.org');
+  const server = new Horizon.Server(HORIZON_URL);
   
   try {
     const account = await server.loadAccount(address);
@@ -141,8 +151,8 @@ export async function checkUsdcTrustline(address: string): Promise<TrustlineStat
         balance.asset_type !== 'native' &&
         'asset_code' in balance &&
         'asset_issuer' in balance &&
-        balance.asset_code === USDC_BLEND_TESTNET.code &&
-        balance.asset_issuer === USDC_BLEND_TESTNET.issuer
+        balance.asset_code === USDC_TOKEN.code &&
+        balance.asset_issuer === USDC_TOKEN.issuer
     );
     
     if (trustline && 'balance' in trustline && 'limit' in trustline) {
@@ -150,24 +160,35 @@ export async function checkUsdcTrustline(address: string): Promise<TrustlineStat
         exists: true,
         balance: trustline.balance,
         limit: trustline.limit,
+        assetCode: USDC_TOKEN.code,
+        assetIssuer: USDC_TOKEN.issuer,
       };
     }
     
-    return { exists: false };
+    return { 
+      exists: false,
+      assetCode: USDC_TOKEN.code,
+      assetIssuer: USDC_TOKEN.issuer,
+    };
   } catch (error) {
     console.error('Error checking trustline:', error);
-    return { exists: false };
+    return { 
+      exists: false,
+      assetCode: USDC_TOKEN.code,
+      assetIssuer: USDC_TOKEN.issuer,
+    };
   }
 }
 
 /**
  * Build a transaction to add USDC trustline
+ * @see https://developers.stellar.org/docs/build/apps/example-application-tutorial/manage-trust
  */
 export async function buildAddTrustlineTransaction(address: string): Promise<string> {
-  const server = new Horizon.Server('https://horizon-testnet.stellar.org');
+  const server = new Horizon.Server(HORIZON_URL);
   const account = await server.loadAccount(address);
   
-  const asset = new Asset(USDC_BLEND_TESTNET.code, USDC_BLEND_TESTNET.issuer);
+  const asset = new Asset(USDC_TOKEN.code, USDC_TOKEN.issuer);
   
   const transaction = new TransactionBuilder(account, {
     fee: '100',
@@ -187,14 +208,17 @@ export async function buildAddTrustlineTransaction(address: string): Promise<str
 
 /**
  * Add USDC trustline using the connected wallet
+ * @see https://developers.stellar.org/docs/build/apps/example-application-tutorial/manage-trust
  */
 export async function addUsdcTrustline(address: string): Promise<{
   success: boolean;
   txHash?: string;
   error?: string;
+  assetCode?: string;
+  assetIssuer?: string;
 }> {
   try {
-    const server = new Horizon.Server('https://horizon-testnet.stellar.org');
+    const server = new Horizon.Server(HORIZON_URL);
     
     // Build the trustline transaction
     const xdr = await buildAddTrustlineTransaction(address);
@@ -209,12 +233,16 @@ export async function addUsdcTrustline(address: string): Promise<{
     return {
       success: true,
       txHash: result.hash,
+      assetCode: USDC_TOKEN.code,
+      assetIssuer: USDC_TOKEN.issuer,
     };
   } catch (error) {
     console.error('Error adding trustline:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido al agregar trustline',
+      assetCode: USDC_TOKEN.code,
+      assetIssuer: USDC_TOKEN.issuer,
     };
   }
 }
@@ -285,4 +313,7 @@ export function disconnectWallet(): void {
   }
 }
 
-export const USDC_TOKEN = USDC_BLEND_TESTNET;
+/**
+ * Export token configuration for external use
+ */
+export const PAYMENT_TOKEN = USDC_TOKEN;
