@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -26,8 +26,8 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { MuiTelInput } from 'mui-tel-input';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { GlassCard } from '../../components/GlassCard';
@@ -43,11 +43,11 @@ const frequencyOptions = [
 
 // Background images mapped to each stage
 const stageBackgrounds = [
-  '/assets/images/backgrounds/onBoardingNameandAmmount.png',
-  '/assets/images/backgrounds/onBoardingFrecuencyandYield.png',
-  '/assets/images/backgrounds/onBoardingWhatsappVerification.png',
-  '/assets/images/backgrounds/onBoardingWhatsappVerification.png',
-  '/assets/images/backgrounds/onBoardingSuccess.png',
+  '/assets/images/backgrounds/onBoardingNameandAmmount.webp',
+  '/assets/images/backgrounds/onBoardingFrecuencyandYield.webp',
+  '/assets/images/backgrounds/onBoardingWhatsappVerification.webp',
+  '/assets/images/backgrounds/onBoardingWhatsappVerification.webp',
+  '/assets/images/backgrounds/onBoardingSuccess.webp',
 ];
 
 type StatusMessage = { type: 'success' | 'error'; text: string } | null;
@@ -114,6 +114,7 @@ export default function OnboardingVerifyPage() {
   // Form data - Stage 3 (WhatsApp Verification)
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [whatsappUsername, setWhatsappUsername] = useState<string | null>(null);
   
   // Form data - Stage 4 (Confirmation)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
@@ -127,7 +128,7 @@ export default function OnboardingVerifyPage() {
   const whatsappAgentNumber = process.env.NEXT_PUBLIC_WHATSAPP_AGENT_NUMBER || '';
 
   // Stage titles and descriptions for i18n
-  const stageContent = useMemo(() => ({
+  const stageContent = {
     1: {
       title: locale === 'es' ? 'Información del Grupo' : 'Group Information',
       subtitle: locale === 'es' 
@@ -163,24 +164,26 @@ export default function OnboardingVerifyPage() {
         : 'Your tanda is ready to start',
       icon: <CelebrationIcon sx={{ fontSize: 32 }} />,
     },
-  }), [locale]);
+  };
 
-  const frequencyToSend = useMemo(() => {
+  // Calculate frequency to send
+  const getFrequencyToSend = () => {
     if (frequencyDays === -1) {
       const custom = Number(customDays || '0');
       return Number.isFinite(custom) && custom > 0 ? custom : 0;
     }
     return frequencyDays;
-  }, [frequencyDays, customDays]);
+  };
 
-  const getFrequencyLabel = useCallback(() => {
+  const getFrequencyLabel = () => {
     if (frequencyDays === -1) return `${customDays} ${locale === 'es' ? 'días' : 'days'}`;
     const option = frequencyOptions.find(o => o.value === frequencyDays);
     return locale === 'es' ? option?.labelEs : option?.labelEn;
-  }, [frequencyDays, customDays, locale]);
+  };
 
   // Validate stage before proceeding
-  const canProceedFromStage = useCallback((stage: number): boolean => {
+  const canProceedFromStage = (stage: number): boolean => {
+    const frequencyToSend = getFrequencyToSend();
     switch (stage) {
       case 1:
         return groupName.trim() !== '' && Number(totalAmount) > 0;
@@ -193,9 +196,9 @@ export default function OnboardingVerifyPage() {
       default:
         return true;
     }
-  }, [groupName, totalAmount, frequencyToSend, verificationCode, isPhoneVerified]);
+  };
 
-  // Request verification code - GET /api/onboarding/verify
+  // Request verification code - GET /api/api/frontend/verify
   const requestVerificationCode = async () => {
     if (!agentUrl) {
       setMessage({ type: 'error', text: t.payment.missingAgent });
@@ -206,21 +209,42 @@ export default function OnboardingVerifyPage() {
     setMessage(null);
     
     try {
-      const res = await fetch(`${agentUrl}/api/onboarding/verify?phone=${encodeURIComponent(phoneNumber.trim())}`);
+      // Detectar si es un enlace de ngrok y agregar headers necesarios
+      const isNgrok = agentUrl.includes('ngrok-free.app') || agentUrl.includes('.ngrok-free.dev');
+      const headers: HeadersInit = {};
+      
+      if (isNgrok) {
+        // Header para saltar el warning de ngrok
+        // Documentación: https://ngrok.com/docs/errors/err_ngrok_6024
+        headers['ngrok-skip-browser-warning'] = 'true';
+        headers['User-Agent'] = 'PasaTanda-Frontend';
+      }
+      
+      const res = await fetch(
+        `${agentUrl}/api/api/frontend/verify?phone=${encodeURIComponent(phoneNumber.trim())}`,
+        { headers }
+      );
       const data = await res.json().catch(() => ({}));
       
       if (!res.ok) throw new Error(data?.message || (locale === 'es' ? 'No se pudo enviar el código' : 'Could not send code'));
       
       if (data.code) {
         setVerificationCode(data.code);
+        setMessage({ 
+          type: 'success', 
+          text: locale === 'es' 
+            ? 'Código generado correctamente' 
+            : 'Code generated successfully'
+        });
+      } else {
+        // Error si el código está vacío
+        setMessage({ 
+          type: 'error', 
+          text: locale === 'es' 
+            ? 'Error: El código de verificación está vacío' 
+            : 'Error: Verification code is empty'
+        });
       }
-      
-      setMessage({ 
-        type: 'success', 
-        text: locale === 'es' 
-          ? 'Código generado. Envíalo al agente de WhatsApp.' 
-          : 'Code generated. Send it to the WhatsApp agent.'
-      });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : (locale === 'es' ? 'Error desconocido' : 'Unknown error');
       setMessage({ type: 'error', text: errorMessage });
@@ -229,34 +253,66 @@ export default function OnboardingVerifyPage() {
     }
   };
 
-  // Listen for webhook verification - POST /api/webhook/confirm_verification
+  // Listen for webhook verification - usando el endpoint correcto de PayBE
   useEffect(() => {
-    if (currentStage !== 4) return;
+    if (currentStage !== 4 || !agentUrl || isPhoneVerified) return;
     
     const checkVerification = async () => {
       try {
-        const res = await fetch(`/api/webhook/check_verification?phone=${encodeURIComponent(phoneNumber.trim())}`);
+        // Detectar si es un enlace de ngrok y agregar headers necesarios
+        const isNgrok = agentUrl.includes('ngrok-free.app') || agentUrl.includes('.ngrok-free.dev');
+        const headers: HeadersInit = {};
+        
+        if (isNgrok) {
+          // Headers para saltar el warning de ngrok
+          headers['ngrok-skip-browser-warning'] = 'true';
+          headers['User-Agent'] = 'PasaTanda-Frontend';
+        }
+        
+        const res = await fetch(
+          `${agentUrl}/api/frontend/confirm-verification?phone=${encodeURIComponent(phoneNumber.trim())}`,
+          { headers }
+        );
         const data = await res.json();
         
         if (data.verified) {
           setIsPhoneVerified(true);
+          setWhatsappUsername(data.username ?? null);
           setMessage({ 
             type: 'success', 
             text: locale === 'es' 
               ? '¡Número de WhatsApp verificado correctamente!' 
               : 'WhatsApp number verified successfully!'
           });
+          return true;
         }
       } catch {
         // Silent fail - we'll keep polling
       }
+      return false;
     };
 
-    const interval = setInterval(checkVerification, 3000);
-    return () => clearInterval(interval);
-  }, [currentStage, phoneNumber, locale]);
+    let interval: NodeJS.Timeout;
 
-  // Create group - POST /api/onboarding
+    const startPolling = async () => {
+      const verified = await checkVerification();
+      if (verified) return;
+      interval = setInterval(async () => {
+        const ok = await checkVerification();
+        if (ok) {
+          clearInterval(interval);
+        }
+      }, 5000);
+    };
+
+    startPolling();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [currentStage, phoneNumber, locale, agentUrl, isPhoneVerified]);
+
+  // Create group - POST /api/frontend/create-group
   const createGroup = async () => {
     if (!agentUrl) {
       setMessage({ type: 'error', text: t.payment.missingAgent });
@@ -267,17 +323,19 @@ export default function OnboardingVerifyPage() {
     setMessage(null);
 
     const payload = {
-      phoneNumber: phoneNumber.trim(),
-      groupName: groupName.trim(),
-      amountBs: currency === 'BS' ? Number(totalAmount) : undefined,
-      amountUsdc: currency === 'USDC' ? Number(totalAmount) : undefined,
-      frequencyDays: frequencyToSend,
-      yieldEnabled,
-      verificationCode: verificationCode.trim(),
+      payload: {
+        name: groupName.trim() || undefined,
+        phone: phoneNumber.trim() || undefined,
+        whatsappUsername: whatsappUsername || undefined,
+        currency,
+        amount: Number(totalAmount),
+        frequency: getFrequencyToSend().toString(),
+        enableYield: yieldEnabled,
+      },
     };
 
     try {
-      const res = await fetch(`${agentUrl}/api/onboarding`, {
+      const res = await fetch(`${agentUrl}/api/frontend/create-group`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -305,15 +363,18 @@ export default function OnboardingVerifyPage() {
     }
   };
 
-  // Generate WhatsApp link
-  const whatsappLink = useMemo(() => {
-    const whatsappMessage = encodeURIComponent(
-      locale === 'es' 
-        ? `Mi código de verificación es: ${verificationCode}` 
-        : `My verification code is: ${verificationCode}`
-    );
-    return `https://wa.me/${whatsappAgentNumber}?text=${whatsappMessage}`;
-  }, [verificationCode, whatsappAgentNumber, locale]);
+  // Generate WhatsApp link con formato oficial de la API de WhatsApp
+  const getWhatsappLink = () => {
+    if (!verificationCode.trim()) return '';
+    
+    const baseMessage = locale === 'es' 
+      ? 'Mi codigo de verificacion PasaTanda es:' 
+      : 'My PasaTanda verification code is:';
+    
+    const fullMessage = `${baseMessage} ~*${verificationCode}*~`;
+    
+    return `https://api.whatsapp.com/send?phone=${whatsappAgentNumber}&text=${encodeURIComponent(fullMessage)}`;
+  };
 
   // Navigation handlers
   const goToNextStage = () => {
@@ -469,12 +530,14 @@ export default function OnboardingVerifyPage() {
       case 3:
         return (
           <Stack spacing={3}>
-            <TextField
-              label={locale === 'es' ? 'Número de WhatsApp (con código de país)' : 'WhatsApp number (with country code)'}
+            <MuiTelInput
+              label={locale === 'es' ? 'Número de WhatsApp' : 'WhatsApp number'}
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              onChange={(value) => setPhoneNumber(value)}
+              defaultCountry="BO"
+              preferredCountries={['BO', 'AR', 'BR', 'CL', 'PE']}
               fullWidth
-              placeholder="Ej: +591 70000000"
+              placeholder={locale === 'es' ? '+591 70000000' : '+591 70000000'}
               sx={glassInputStyle}
             />
             
@@ -501,43 +564,79 @@ export default function OnboardingVerifyPage() {
             
             {verificationCode && (
               <Fade in>
-                <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Box sx={{ textAlign: 'center', py: 3 }}>
                   <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 2 }}>
                     {locale === 'es' ? 'Tu código de verificación es:' : 'Your verification code is:'}
                   </Typography>
-                  <Typography
-                    variant="h2"
+                  
+                  {/* Código en formato OTP */}
+                  <Box
                     sx={{
-                      fontWeight: 700,
-                      letterSpacing: '0.3em',
-                      color: '#000',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: 1.5,
                       mb: 3,
+                      flexWrap: 'wrap',
                     }}
                   >
-                    {verificationCode}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 2 }}>
+                    {verificationCode.split('').map((digit, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          width: { xs: 40, sm: 56 },
+                          height: { xs: 50, sm: 64 },
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'rgba(0,0,0,0.05)',
+                          border: '2px solid rgba(0,0,0,0.2)',
+                          borderRadius: 2,
+                          fontSize: { xs: '1.5rem', sm: '2rem' },
+                          fontWeight: 700,
+                          color: '#000',
+                          letterSpacing: 0,
+                        }}
+                      >
+                        {digit}
+                      </Box>
+                    ))}
+                  </Box>
+                  
+                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.6)', mb: 3 }}>
                     {locale === 'es' 
-                      ? 'Envía este código al agente de WhatsApp para verificar tu número' 
-                      : 'Send this code to the WhatsApp agent to verify your number'}
+                      ? 'Envía este código al bot de WhatsApp para verificar tu número' 
+                      : 'Send this code to the WhatsApp bot to verify your number'}
                   </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<WhatsAppIcon />}
-                    href={whatsappLink}
-                    target="_blank"
-                    sx={{
-                      bgcolor: '#000',
-                      color: '#fff',
-                      px: 4,
-                      py: 1.5,
-                      '&:hover': {
-                        bgcolor: '#222',
-                      },
-                    }}
-                  >
-                    {locale === 'es' ? 'Enviar código por WhatsApp' : 'Send code via WhatsApp'}
-                  </Button>
+                  
+                  {/* Botón de WhatsApp */}
+                  {verificationCode.trim() ? (
+                    <Button
+                      variant="contained"
+                      startIcon={<WhatsAppIcon />}
+                      component="a"
+                      href={getWhatsappLink()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{
+                        bgcolor: '#25D366',
+                        color: '#fff',
+                        px: 4,
+                        py: 1.5,
+                        fontWeight: 600,
+                        '&:hover': {
+                          bgcolor: '#1fb855',
+                        },
+                      }}
+                    >
+                      {locale === 'es' ? 'Enviar código al bot' : 'Send code to bot'}
+                    </Button>
+                  ) : (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      {locale === 'es' 
+                        ? 'Error: El código de verificación está vacío' 
+                        : 'Error: Verification code is empty'}
+                    </Alert>
+                  )}
                 </Box>
               </Fade>
             )}
@@ -596,6 +695,7 @@ export default function OnboardingVerifyPage() {
                         } 
                       />
                       <SummaryItem label="WhatsApp" value={phoneNumber} />
+                      <SummaryItem label={locale === 'es' ? 'Usuario de WhatsApp' : 'WhatsApp username'} value={whatsappUsername || (locale === 'es' ? 'No disponible' : 'Not available')} />
                     </Stack>
                   </Box>
                   
@@ -675,13 +775,14 @@ export default function OnboardingVerifyPage() {
         bgcolor: '#fff',
       }}
     >
-      {/* Background image carousel based on stage */}
+      {/* Background image pattern based on stage */}
       <Box
         sx={{
           position: 'fixed',
           inset: 0,
           backgroundImage: `url(${stageBackgrounds[currentStage - 1]})`,
-          backgroundSize: 'cover',
+          backgroundSize: '400px 400px',
+          backgroundRepeat: 'repeat',
           backgroundPosition: 'center',
           transition: 'background-image 0.6s ease-in-out',
           '&::after': {
