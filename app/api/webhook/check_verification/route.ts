@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
   
   // Forward to the confirm_verification endpoint
-  const confirmUrl = new URL('/api/webhook/confirm_verification', request.url);
+  const confirmUrl = new URL('/api/frontend/confirm-verification', request.url);
   confirmUrl.searchParams.set('phone', phone);
   
   try {

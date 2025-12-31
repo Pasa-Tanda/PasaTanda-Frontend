@@ -10,7 +10,7 @@
   - Respuesta: `{ "status": "success" }`.
 
 ## Onboarding (sin contrato todavía)
-- **GET /api/onboarding/verify?phone=59812345678** — Emite código de verificación.
+- **GET /api/api/frontend/verify?phone=59812345678** — Emite código de verificación.
   - Respuesta 200:
     ```json
     {
@@ -20,7 +20,7 @@
       "instructions": "Envía este código por WhatsApp para validar tu número antes de crear la tanda."
     }
     ```
-- **POST /api/onboarding** — Crea usuario + grupo de WhatsApp y deja el grupo en estado `DRAFT` (sin contrato Soroban ni orden de pago).
+- **POST /api/frontend/create-group** — Crea usuario + grupo de WhatsApp y deja el grupo en estado `DRAFT` (sin contrato Soroban ni orden de pago).
   - Body ejemplo:
     ```json
     {
@@ -48,7 +48,7 @@
     ```
 
 ## Activar Tanda (crear contrato + pago inicial)
-- **POST /api/onboarding/:groupId/start** — Despliega contrato en Soroban y genera la primera orden de pago.
+- **POST /api/frontend/create-group/:groupId/start** — Despliega contrato en Soroban y genera la primera orden de pago.
   - Body ejemplo:
     ```json
     {
@@ -142,6 +142,6 @@
 - **POST /api/catalog/test** — Envía plantilla de prueba al catálogo de WhatsApp (uso interno de validación).
 
 ## Notas de seguridad
-- Sirve `/api/onboarding`, `/api/onboarding/verify`, `/api/onboarding/:groupId/start`, `/api/orders/*`, `/api/pay` solo sobre HTTPS y dominio autorizado.
+- Sirve `/api/frontend/create-group`, `/api/api/frontend/verify`, `/api/frontend/create-group/:groupId/start`, `/api/orders/*`, `/api/pay` solo sobre HTTPS y dominio autorizado.
 - Webhooks: validar `WHATSAPP_VERIFY_TOKEN` en GET /webhook y firmas/HMAC de PayBE si se habilitan.
 - Supabase requerido para persistir verificación, órdenes y grupos; en dev existe fallback in-memory para verificación.

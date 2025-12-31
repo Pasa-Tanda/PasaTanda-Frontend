@@ -49,13 +49,13 @@ Base URL: `${NEXT_PUBLIC_AGENT_BE_URL}`
 
 ### Onboarding
 
-#### GET /api/onboarding/verify
+#### GET /api/api/frontend/verify
 
 Solicita código de verificación para validar número de WhatsApp.
 
 **Request:**
 ```http
-GET /api/onboarding/verify?phone=%2B59177777777
+GET /api/api/frontend/verify?phone=%2B59177777777
 ```
 
 **Response (200):**
@@ -80,7 +80,7 @@ GET /api/onboarding/verify?phone=%2B59177777777
 ```typescript
 const agentUrl = process.env.NEXT_PUBLIC_AGENT_BE_URL;
 
-const response = await fetch(`${agentUrl}/api/onboarding/verify?phone=${encodeURIComponent(phone)}`);
+const response = await fetch(`${agentUrl}/api/api/frontend/verify?phone=${encodeURIComponent(phone)}`);
 const data = await response.json();
 
 if (data.success) {
@@ -91,13 +91,13 @@ if (data.success) {
 
 ---
 
-#### POST /api/onboarding
+#### POST /api/frontend/create-group
 
 Crea una nueva tanda (estado DRAFT). No despliega contratos hasta que el admin active la tanda.
 
 **Request:**
 ```http
-POST /api/onboarding
+POST /api/frontend/create-group
 Content-Type: application/json
 
 {
@@ -139,7 +139,7 @@ Content-Type: application/json
 **Ejemplo Frontend:**
 ```typescript
 const createTanda = async (formData: OnboardingFormData) => {
-  const response = await fetch(`${agentUrl}/api/onboarding`, {
+  const response = await fetch(`${agentUrl}/api/frontend/create-group`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -341,12 +341,12 @@ const handleCryptoClaim = async () => {
 
 El frontend expone webhooks que AgentBE llama para notificar eventos.
 
-### POST /api/webhook/confirm_verification
+### POST /api/frontend/confirm-verification
 
 Recibe confirmación de verificación de WhatsApp desde AgentBE.
 
 **Flujo:**
-1. Usuario solicita código en frontend → GET /api/onboarding/verify
+1. Usuario solicita código en frontend → GET /api/api/frontend/verify
 2. Frontend muestra código al usuario
 3. Usuario envía código al bot de WhatsApp
 4. Bot valida código y extrae datos del usuario
@@ -354,7 +354,7 @@ Recibe confirmación de verificación de WhatsApp desde AgentBE.
 
 **Request (desde AgentBE):**
 ```http
-POST /api/webhook/confirm_verification
+POST /api/frontend/confirm-verification
 Content-Type: application/json
 
 {
@@ -393,13 +393,13 @@ Content-Type: application/json
 
 ---
 
-### GET /api/webhook/confirm_verification
+### GET /api/frontend/confirm-verification
 
 Polling endpoint para verificar estado de verificación desde el frontend.
 
 **Request:**
 ```http
-GET /api/webhook/confirm_verification?phone=%2B59177777777
+GET /api/frontend/confirm-verification?phone=%2B59177777777
 ```
 
 **Response (verificado):**
@@ -427,7 +427,7 @@ useEffect(() => {
   
   const pollVerification = async () => {
     const response = await fetch(
-      `/api/webhook/confirm_verification?phone=${encodeURIComponent(phone)}`
+      `/api/frontend/confirm-verification?phone=${encodeURIComponent(phone)}`
     );
     const data = await response.json();
     
@@ -540,8 +540,8 @@ const xPayment = await buildXPayment(order.xdrChallenge, {
 | Ruta | Descripción |
 |------|-------------|
 | `/` | Landing page |
-| `/onboarding` | Redirect a /onboarding/verify |
-| `/onboarding/verify` | Flujo de creación de tanda (5 etapas) |
+| `/onboarding` | Redirect a /api/frontend/verify |
+| `/api/frontend/verify` | Flujo de creación de tanda (5 etapas) |
 | `/pagos` | Información de métodos de pago |
 | `/pagos/[id]` | Página de pago individual |
 | `/docs` | Índice de documentación |

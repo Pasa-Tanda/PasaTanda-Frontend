@@ -35,8 +35,8 @@ El sistema se compone de tres piezas principales que el Frontend debe conocer:
 ### A. Onboarding (Creación de Tanda)
 El usuario "Organizador" configura la tanda desde la web.
 1.  **Formulario:** Ingresa datos (Nombre grupo, Monto Bs/USDC, Frecuencia, Tasa Cambio).
-2.  **Verificación Telefónica:** Solicita código SMS/WhatsApp (`GET /api/onboarding/verify`) y lo ingresa.
-3.  **Creación (Draft):** Envía el formulario (`POST /api/onboarding`).
+2.  **Verificación Telefónica:** Solicita código SMS/WhatsApp (`GET /api/api/frontend/verify`) y lo ingresa.
+3.  **Creación (Draft):** Envía el formulario (`POST /api/frontend/create-group`).
     * *Resultado:* Se crea el grupo en BD y en WhatsApp, pero **NO** en Blockchain aún. El estado es `DRAFT`.
 4.  **Activación:** El admin debe escribir "iniciar tanda" en WhatsApp o usar un botón en el UI (si existiera) para desplegar el contrato y activar el juego.
 
@@ -91,8 +91,8 @@ Utiliza estos endpoints para construir la interfaz.
         ```
 
 ### Onboarding
-* **`GET /api/onboarding/verify?phone=...`**: Obtener código de validación.
-* **`POST /api/onboarding`**: Crear la estructura inicial de la tanda.
+* **`GET /api/api/frontend/verify?phone=...`**: Obtener código de validación.
+* **`POST /api/frontend/create-group`**: Crear la estructura inicial de la tanda.
 
 ### Proxy de Pagos (Uso Avanzado/Discovery)
 * **`GET /api/pay`**: Endpoint polimórfico. Si se llama sin headers, devuelve métodos de pago disponibles (Discovery). Si se llama con `X-PAYMENT`, ejecuta verificación. *Nota: El frontend generalmente usará los endpoints de `/orders` que envuelven esta lógica, pero es bueno conocerlo.*
