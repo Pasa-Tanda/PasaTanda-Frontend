@@ -198,7 +198,7 @@ export default function OnboardingVerifyPage() {
     }
   };
 
-  // Request verification code - GET /api/api/frontend/verify
+  // Request verification code - GET /api/frontend/verify
   const requestVerificationCode = async () => {
     if (!agentUrl) {
       setMessage({ type: 'error', text: t.payment.missingAgent });
@@ -221,7 +221,7 @@ export default function OnboardingVerifyPage() {
       }
       
       const res = await fetch(
-        `${agentUrl}/api/api/frontend/verify?phone=${encodeURIComponent(phoneNumber.trim())}`,
+        `${agentUrl}/api/frontend/verify?phone=${encodeURIComponent(phoneNumber.trim())}`,
         { headers }
       );
       const data = await res.json().catch(() => ({}));
@@ -323,15 +323,13 @@ export default function OnboardingVerifyPage() {
     setMessage(null);
 
     const payload = {
-      payload: {
-        name: groupName.trim() || undefined,
-        phone: phoneNumber.trim() || undefined,
-        whatsappUsername: whatsappUsername || undefined,
-        currency,
-        amount: Number(totalAmount),
-        frequency: getFrequencyToSend().toString(),
-        enableYield: yieldEnabled,
-      },
+      name: groupName.trim() || undefined,
+      phone: phoneNumber.trim() || undefined,
+      whatsappUsername: whatsappUsername || undefined,
+      currency,
+      amount: Number(totalAmount),
+      frequency: getFrequencyToSend().toString(),
+      enableYield: yieldEnabled,
     };
 
     try {
@@ -738,13 +736,18 @@ export default function OnboardingVerifyPage() {
             </Typography>
             <Typography variant="body1" sx={{ color: 'rgba(0,0,0,0.6)' }}>
               {locale === 'es' 
-                ? 'Revisa tu WhatsApp para encontrar el link de invitación' 
-                : 'Check your WhatsApp for the invitation link'}
+                ? 'Revisa tu WhatsApp para interactuar con el agente' 
+                : 'Check your WhatsApp fto interact with the agent'}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.5)', mt: 2 }}>
               {locale === 'es' 
-                ? 'Nota: El grupo está en estado DRAFT. Escribe "iniciar tanda" en el grupo de WhatsApp para activar el contrato y comenzar.' 
-                : 'Note: The group is in DRAFT state. Type "iniciar tanda" in the WhatsApp group to activate the contract and start.'}
+                ? 'Nota: Enviale al agente los contactos de la gente que quieras agregar al grupo.' 
+                : 'Note: Send the contacts of the people you want to add to the group to the agent.'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.5)', mt: 2 }}>
+              {locale === 'es' 
+                ? 'Nota: El grupo está en estado DRAFT. Escribe "iniciar tanda" al agente de WhatsApp para activar el contrato y comenzar.' 
+                : 'Note: The group is in DRAFT state. Type "iniciar tanda" to the WhatsApp agent to activate the contract and start.'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.4)' }}>
               {locale === 'es' ? 'Serás redirigido a la página principal en unos segundos...' : 'You will be redirected to the main page in a few seconds...'}
