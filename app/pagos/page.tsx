@@ -349,7 +349,7 @@ export default function PagosInfo() {
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                       <Button
                         component={Link}
-                        href="/api/frontend/verify"
+                        href="/onboarding/verify"
                         variant="contained"
                         sx={{
                           px: 4,

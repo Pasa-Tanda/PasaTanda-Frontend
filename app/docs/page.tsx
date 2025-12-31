@@ -120,8 +120,8 @@ export default function DocsPage() {
   const apiEndpoints = [
     { method: 'GET', path: '/api/orders/:id', description: 'Obtener detalles de una orden de pago (QR, XDR, estado)' },
     { method: 'POST', path: '/api/orders/:id/claim', description: 'Confirmar un pago (fiat o crypto)' },
-    { method: 'GET', path: '/api/api/frontend/verify', description: 'Solicitar código de verificación telefónica' },
-    { method: 'POST', path: '/api/frontend/create-group', description: 'Crear una nueva tanda (estado DRAFT)' },
+    { method: 'GET', path: '/api/onboarding/verify', description: 'Solicitar código de verificación telefónica' },
+    { method: 'POST', path: '/api/onboarding', description: 'Crear una nueva tanda (estado DRAFT)' },
     { method: 'GET', path: '/api/pay', description: 'Discovery de métodos de pago disponibles' },
   ];
 
@@ -353,7 +353,7 @@ export default function DocsPage() {
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                       <Button 
                         component={Link} 
-                        href="/api/frontend/verify" 
+                        href="/onboarding/verify" 
                         variant="contained"
                         sx={{
                           px: 3,

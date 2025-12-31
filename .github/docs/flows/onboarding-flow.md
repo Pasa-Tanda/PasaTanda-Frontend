@@ -20,7 +20,7 @@ sequenceDiagram
     A->>FE: numero verificado exitosamente (POST api/webhook/confirm verification) [+ datos de wsp]
     FE->>U: Muestra un resumen de todos los datos (+ los recibidos en el webhook)
     U->>FE: Confirma y envia todos los datos de creacion del grupo
-    FE->>A: POST api/frontend/create-group
+    FE->>A: POST api/onboarding
     Note over FE, A: NO CREA CONTRATOS DE SOROBAN AUN (no se da inicio a la tanda)
     A->>A: crea keypairs de stellar
     A->>SB: Une los datos del formulario y los de agentBE (wsp + stellar keys) para crear un nuevo usuario (INSERT/UPSERT user)

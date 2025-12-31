@@ -30,7 +30,7 @@ function cleanupOldEntries() {
 }
 
 /**
- * POST /api/frontend/confirm-verification
+ * POST /api/webhook/confirm_verification
  * 
  * Webhook endpoint to receive phone verification confirmations from AgentBE.
  * Called by AgentBE when a user successfully verifies their WhatsApp number
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/frontend/confirm-verification
+ * GET /api/webhook/confirm_verification
  * 
  * Check if a phone number has been verified (used for polling from frontend).
  * The frontend polls this endpoint to check verification status after

@@ -6,8 +6,8 @@ This document describes the new API endpoints implemented in the PasaTanda Front
 
 - [Overview](#overview)
 - [Webhook Endpoints](#webhook-endpoints)
-  - [POST /api/frontend/confirm-verification](#post-apiwebhookconfirm_verification)
-  - [GET /api/frontend/confirm-verification](#get-apiwebhookconfirm_verification)
+  - [POST /api/webhook/confirm_verification](#post-apiwebhookconfirm_verification)
+  - [GET /api/webhook/confirm_verification](#get-apiwebhookconfirm_verification)
   - [GET /api/webhook/check_verification](#get-apiwebhookcheck_verification)
 - [Environment Variables](#environment-variables)
 - [AgentBE Integration](#agentbe-integration)
@@ -28,11 +28,11 @@ The frontend implements webhook endpoints to receive verification confirmations 
 
 ## Webhook Endpoints
 
-### POST /api/frontend/confirm-verification
+### POST /api/webhook/confirm_verification
 
 **Purpose:** Receive phone verification confirmations from AgentBE.
 
-**URL:** `POST /api/frontend/confirm-verification`
+**URL:** `POST /api/webhook/confirm_verification`
 
 **Request Headers:**
 ```
@@ -80,11 +80,11 @@ Content-Type: application/json
 
 ---
 
-### GET /api/frontend/confirm-verification
+### GET /api/webhook/confirm_verification
 
 **Purpose:** Check if a phone number has been verified (polling endpoint).
 
-**URL:** `GET /api/frontend/confirm-verification?phone={phoneNumber}`
+**URL:** `GET /api/webhook/confirm_verification?phone={phoneNumber}`
 
 **Query Parameters:**
 | Parameter | Type | Required | Description |
@@ -160,7 +160,7 @@ The frontend expects the following endpoints from AgentBE:
 
 #### 1. Request Verification Code
 ```
-GET /api/api/frontend/verify?phone={phoneNumber}
+GET /api/onboarding/verify?phone={phoneNumber}
 ```
 
 **Expected Response:**
@@ -174,7 +174,7 @@ GET /api/api/frontend/verify?phone={phoneNumber}
 
 #### 2. Create Group (Onboarding)
 ```
-POST /api/frontend/create-group
+POST /api/onboarding
 ```
 
 **Request Body:**
@@ -195,7 +195,7 @@ POST /api/frontend/create-group
 When the user sends the verification code via WhatsApp and AgentBE validates it, AgentBE should call:
 
 ```
-POST {FRONTEND_URL}/api/frontend/confirm-verification
+POST {FRONTEND_URL}/api/webhook/confirm_verification
 ```
 
 **Request Body:**
@@ -219,7 +219,7 @@ sequenceDiagram
     participant WhatsApp
 
     User->>Frontend: Enter phone number
-    Frontend->>AgentBE: GET /api/api/frontend/verify?phone=...
+    Frontend->>AgentBE: GET /api/onboarding/verify?phone=...
     AgentBE-->>Frontend: { code: "ABC123" }
     Frontend->>User: Display verification code
     
@@ -229,7 +229,7 @@ sequenceDiagram
     WhatsApp->>AgentBE: User message with code
     
     AgentBE->>AgentBE: Validate code
-    AgentBE->>Frontend: POST /api/frontend/confirm-verification
+    AgentBE->>Frontend: POST /api/webhook/confirm_verification
     Frontend-->>AgentBE: { success: true }
     
     loop Polling (every 3s)
@@ -238,7 +238,7 @@ sequenceDiagram
     
     Frontend->>User: Show "Phone verified!"
     User->>Frontend: Click "Create group"
-    Frontend->>AgentBE: POST /api/frontend/create-group
+    Frontend->>AgentBE: POST /api/onboarding
     AgentBE-->>Frontend: { groupId: 123 }
     Frontend->>User: Show success + redirect
 ```
@@ -290,12 +290,12 @@ The frontend handles the following error scenarios:
 ### Manual Testing
 
 1. Start the frontend: `npm run dev`
-2. Navigate to `/api/frontend/verify`
+2. Navigate to `/onboarding/verify`
 3. Complete stages 1-2 (group info)
 4. In stage 3, enter phone and generate code
 5. Simulate webhook by calling:
    ```bash
-   curl -X POST http://localhost:3000/api/frontend/confirm-verification \
+   curl -X POST http://localhost:3000/api/webhook/confirm_verification \
      -H "Content-Type: application/json" \
      -d '{"phone": "+591 70000000", "verified": true}'
    ```
@@ -305,9 +305,9 @@ The frontend handles the following error scenarios:
 
 ```typescript
 // Example test for webhook endpoint
-describe('POST /api/frontend/confirm-verification', () => {
+describe('POST /api/webhook/confirm_verification', () => {
   it('should store verification result', async () => {
-    const response = await fetch('/api/frontend/confirm-verification', {
+    const response = await fetch('/api/webhook/confirm_verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

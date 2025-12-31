@@ -157,7 +157,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
   }
 });`;
 
-  const onboardingIntegration = `// POST /api/frontend/create-group
+  const onboardingIntegration = `// POST /api/onboarding
 {
   "name": "Tanda Familia",
   "phone": "+59177777777",

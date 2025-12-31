@@ -92,14 +92,14 @@ bamp-frontend/
 - `/` - Landing Page con diseño glassmorphism
 - `/pagos` - Información sobre pagos
 - `/pagos/[id]` - Página dinámica de pago
-- `/api/frontend/verify` - Flujo de creación de grupo por etapas
+- `/onboarding/verify` - Flujo de creación de grupo por etapas
 - `/ToS` - Términos de Servicio
 - `/PP` - Políticas de Privacidad
 - `/docs` - Documentación del proyecto
 
 ### API Endpoints (Frontend)
 
-- `POST /api/frontend/confirm-verification` - Recibe confirmaciones de WhatsApp desde AgentBE
+- `POST /api/webhook/confirm_verification` - Recibe confirmaciones de WhatsApp desde AgentBE
 - `GET /api/webhook/check_verification` - Polling para verificar estado de verificación
 
 Ver [docs/WEBHOOK_ENDPOINTS.md](docs/WEBHOOK_ENDPOINTS.md) para documentación completa.
